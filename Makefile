@@ -1,2 +1,2 @@
 run:
-	cd ./pentaract && cargo run | cd -
+	cd ./pentaract && cargo run || cd -
