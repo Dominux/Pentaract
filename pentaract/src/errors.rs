@@ -6,9 +6,6 @@ pub enum PentaractError {
     EnvConfigLoadingError(String),
     #[error("environment variable `{0}` cannot be parsed")]
     EnvVarParsingError(String),
-
-    #[error("unknown error")]
-    Unknown,
 }
 
 pub type PentaractResult<T> = Result<T, PentaractError>;
