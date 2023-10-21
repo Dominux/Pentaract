@@ -1,5 +1,13 @@
 version: '3.9'
 
+volumes:
+  pentaract-db-volume:
+    name: pentaract-db-volume
+
+networks:
+  pentaract-network:
+    name: pentaract-network
+
 services:
   pentaract:
     container_name: pentaract
@@ -8,4 +16,28 @@ services:
     env_file:
       - .env
     ports:
-      - ${PENTARACT_PORT}:8080
+      - ${PORT}:8080
+    restart: unless-stopped
+    depends_on:
+      - db
+    networks:
+      - pentaract-network
+
+  db:
+    container_name: pentaract_db
+    image: postgres:15.0-alpine
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    restart: unless-stopped
+    healthcheck:
+      test: pg_isready --username=${DATABASE_USER} --dbname=${DATABASE_NAME}
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pentaract-db-volume:/var/lib/postgresql/data
+      - ./deploy/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - pentaract-network
