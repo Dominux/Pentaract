@@ -13,7 +13,6 @@ use tower::limit::ConcurrencyLimitLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use config::Config;
-use errors::PentaractError;
 use routing::app_state::AppState;
 
 mod config;
