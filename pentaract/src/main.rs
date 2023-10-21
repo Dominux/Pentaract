@@ -1,7 +1,11 @@
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use axum::{routing::get, Router};
-use tokio::sync::{mpsc, oneshot};
+use tokio::{
+    sync::{mpsc, oneshot},
+    time,
+};
+use tower::limit::ConcurrencyLimitLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 const ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 8080);
@@ -23,26 +27,35 @@ async fn main() {
     tokio::spawn(async move {
         tracing::debug!("manager ran");
 
+        let mut counter = 0;
+
         // Start receiving messages
         while let Some(resp_rx) = rx.recv().await {
-            tracing::debug!("got task");
+            counter += 1;
 
-            let _ = resp_rx.send("lmao".to_string());
+            tracing::debug!("stopped at {counter}");
+
+            let _ = resp_rx.send(counter.to_string());
         }
     });
 
     // build our application with a single route
-    let app = Router::new().route(
-        "/",
-        get(|| async move {
-            let (resp_tx, resp_rx) = oneshot::channel();
+    let app = Router::new()
+        .route(
+            "/",
+            get(|| async move {
+                let (resp_tx, resp_rx) = oneshot::channel();
 
-            tracing::debug!("sending task to manager");
-            let _ = tx.send(resp_tx).await;
+                tracing::debug!("started");
+                let _ = tx.send(resp_tx).await;
 
-            resp_rx.await.unwrap()
-        }),
-    );
+                // simulating some io operations
+                time::sleep(time::Duration::from_secs(5)).await;
+
+                resp_rx.await.unwrap()
+            }),
+        )
+        .layer(ConcurrencyLimitLayer::new(4));
 
     // run it
     tracing::debug!("listening on http://{ADDR}");
