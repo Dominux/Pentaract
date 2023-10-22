@@ -1,5 +1,15 @@
-Sup, {% match name %}
-{% when Some with (val) %}
-{{ val }}
-{% when None %}
-{% endmatch %}
+{% extends "base.html" %}
+
+{% block title %}Storage workers{% endblock %}
+
+{% block content %}
+
+<p>
+  Sup, {% match name %}
+  {% when Some with (val) %}
+  {{ val }}
+  {% when None %}
+  {% endmatch %}
+</p>
+
+{% endblock %}
