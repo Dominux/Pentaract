@@ -3,21 +3,21 @@ use std::{
     sync::Arc,
 };
 
-use axum::{routing::get, Router};
+use common::channels::StorageManagerSender;
 use sqlx::postgres::PgPoolOptions;
-use tokio::{
-    sync::{mpsc, oneshot},
-    time,
-};
-use tower::limit::ConcurrencyLimitLayer;
+use tokio::{sync::mpsc, time};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use config::Config;
-use routing::app_state::AppState;
+use crate::common::routing::app_state::AppState;
+use crate::config::Config;
+use crate::server::Server;
 
+mod common;
 mod config;
 mod errors;
-mod routing;
+mod routers;
+mod server;
+mod templates;
 
 #[tokio::main]
 async fn main() {
@@ -32,7 +32,7 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let (tx, mut rx) = mpsc::channel::<Responder<String>>(config.channel_capacity.into());
+    let (tx, mut rx) = mpsc::channel::<StorageManagerSender>(config.channel_capacity.into());
 
     // set up connection pool
     let db = PgPoolOptions::new()
@@ -60,38 +60,12 @@ async fn main() {
 
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), config.port);
 
-    // build our application with a single route
-    let app = {
+    let server = {
         let workers = config.workers;
         let app_state = AppState::new(db, config);
         let shared_state = Arc::new(app_state);
-        Router::new()
-            .route(
-                "/",
-                get(|| async move {
-                    let (resp_tx, resp_rx) = oneshot::channel();
-
-                    tracing::debug!("started");
-                    let _ = tx.send(resp_tx).await;
-
-                    // simulating some io operations
-                    time::sleep(time::Duration::from_secs(5)).await;
-
-                    resp_rx.await.unwrap()
-                }),
-            )
-            .layer(ConcurrencyLimitLayer::new(workers.into()))
-            .with_state(shared_state)
+        Server::build_server(workers.into(), shared_state, tx)
     };
 
-    // run it
-    tracing::debug!("listening on http://{addr}");
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    server.run(&addr).await
 }
-
-/// Provided by the requester and used by the manager task to send
-/// the command response back to the requester.
-type Responder<T> = oneshot::Sender<T>;
