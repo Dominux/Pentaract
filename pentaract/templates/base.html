@@ -7,17 +7,15 @@
 
   <title>{% block title %}{% endblock %} - Pentaract</title>
 
-  <!-- Materialize Icons and CSS -->
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <!-- Material Design Lite Icons and Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.teal-deep_orange.min.css" />
+  <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 
   <style>
-    .content-wrapper {
-      margin-bottom: 0;
-    }
-
-    .navbar-wrapper {
-      height: 100vh;
+    .title-link {
+      text-decoration: none;
+      color: inherit;
     }
   </style>
 
@@ -25,39 +23,49 @@
 </head>
 
 <body>
-  <div class="row content-wrapper">
+  <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
 
-    <!-- Navbar -->
-    <div class="col s3">
+    <header class="mdl-layout__header">
+      <div class="mdl-layout__header-row">
+        <span class="mdl-layout-title mdl-layout--small-screen-only">
+          <a class="title-link" href="#!">Pentaract</a>
+        </span>
 
-      <a href="#!" class="brand-logo">
-        <h3 class="center-align">
-          Pentaract
-        </h3>
-      </a>
+        <div class="mdl-layout-spacer"></div>
 
-      <div class="divider"></div>
-
-      <div class="section">
-        <div class="collection">
-          <a href="#!" class="collection-item">Alvin</a>
-          <a href="#!" class="collection-item active">Storage workers</a>
-          <a href="#!" class="collection-item">Alvin</a>
-          <a href="#!" class="collection-item">Alvin</a>
+        <div
+          class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right">
+          <label class="mdl-button mdl-js-button mdl-button--icon" for="fixed-header-drawer-exp">
+            <i class="material-icons">search</i>
+          </label>
+          <div class="mdl-textfield__expandable-holder">
+            <input class="mdl-textfield__input" type="text" name="sample" id="fixed-header-drawer-exp">
+          </div>
         </div>
       </div>
+    </header>
 
+    <div class="mdl-layout__drawer">
+      <span class="mdl-layout-title">
+        <a class="title-link" href="#!">Pentaract</a>
+      </span>
+
+      <nav class="mdl-navigation">
+        <a class="mdl-navigation__link" href="/storage_workers">
+          Storage workers
+        </a>
+      </nav>
     </div>
 
-    <div class="col s3">
-      {% block content %}{% endblock %}
-    </div>
-  </div>
+    <main class="mdl-layout__content">
+      <div class="page-content">
+
+        {% block content %} {% endblock %}
+
+      </div>
+    </main>
 
   </div>
-
-  <!-- Materialize scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>
 
 </html>
