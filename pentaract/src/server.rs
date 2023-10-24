@@ -6,7 +6,7 @@ use tower::limit::ConcurrencyLimitLayer;
 
 use crate::{
     common::{channels::ClientSender, routing::app_state::AppState},
-    routers::storage_workers::StorageWorkersRouter,
+    routers::{auth::AuthRouter, storage_workers::StorageWorkersRouter},
 };
 
 pub struct Server {
@@ -25,11 +25,12 @@ impl Server {
                     let _ = tx.send(resp_tx).await;
 
                     // simulating some io operations
-                    time::sleep(time::Duration::from_secs(5)).await;
+                    time::sleep(time::Duration::from_millis(500)).await;
 
                     resp_rx.await.unwrap()
                 }),
             )
+            .nest("/auth", AuthRouter::get_router(app_state.clone()))
             .nest(
                 "/storage_workers",
                 StorageWorkersRouter::get_router(app_state.clone()),

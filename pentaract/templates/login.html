@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block head %}
+
+<style>
+  .center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .title {
+    justify-content: center;
+  }
+
+  .login-card.mdl-card {
+    border-radius: 8px;
+    padding: 2vw;
+  }
+
+  .form-fields {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .button-wrapper {
+    text-align: center;
+    padding-top: 1vw;
+  }
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="center">
+  <form action="#">
+
+    <div class="login-card mdl-card mdl-shadow--2dp">
+      <div class="mdl-card__title title">
+        <h2 class="mdl-card__title-text">Pentaract Account</h2>
+      </div>
+
+      <div class="mdl-card__supporting-text form-fields">
+        <div class="mdl-textfield mdl-js-textfield">
+          <input class="mdl-textfield__input" type="username" id="username">
+          <label class="mdl-textfield__label" for="username">Username</label>
+        </div>
+
+        <div class="mdl-textfield mdl-js-textfield">
+          <input class="mdl-textfield__input" type="password" id="password" type="password">
+          <label class="mdl-textfield__label" for="password">Password</label>
+        </div>
+      </div>
+
+      <div class="mdl-card__actions button-wrapper">
+        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">
+          Login
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+{% endblock %}
