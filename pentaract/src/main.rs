@@ -18,6 +18,8 @@ mod errors;
 mod routers;
 mod server;
 mod templates;
+mod repositories;
+mod models;
 
 #[tokio::main]
 async fn main() {
