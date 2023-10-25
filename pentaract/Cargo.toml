@@ -12,6 +12,8 @@ tower = { version = "0.4.13", features = ["limit"] }
 tower-http = { version = "0.4.4", features = ["trace"], default_features = false }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"]} 
+serde = "1.0.189"
+pwhash = "1.0.0"
 
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid"] }
 

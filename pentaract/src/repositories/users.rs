@@ -1,11 +1,11 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::users::{InDBUser, User};
 use crate::errors::{PentaractError, PentaractResult};
+use crate::models::users::{InDBUser, User};
 
 pub struct UsersRepository<'d> {
-    db: &'d PgPool
+    db: &'d PgPool,
 }
 
 impl<'d> UsersRepository<'d> {
@@ -18,23 +18,26 @@ impl<'d> UsersRepository<'d> {
 
         sqlx::query(
             r#"
-                INSERT INTO users (id, email, password)
+                INSERT INTO users (id, username, password_hash)
                 VALUES ($1, $2, $3);
-            "#
+            "#,
         )
-            .bind(id)
-            .bind(in_obj.email.clone())
-            .bind(in_obj.password_hash.clone())
-            .execute(self.db)
-            .await
-            .map_err(|e| match e {
-                sqlx::Error::Database(dbe) if dbe.constraint() == Some("users_email_key") => {
-                    PentaractError::AlreadyExists("user with given email".into())
-                }
-                _ => PentaractError::Unknown,
-            })?;
+        .bind(id)
+        .bind(in_obj.username.clone())
+        .bind(in_obj.password_hash.clone())
+        .execute(self.db)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::Database(dbe) if dbe.constraint() == Some("users_username_key") => {
+                PentaractError::AlreadyExists("user with given username".into())
+            }
+            _ => {
+                tracing::error!("{e}");
+                PentaractError::Unknown
+            }
+        })?;
 
-        let user = User::new(id, in_obj.email, in_obj.password_hash);
+        let user = User::new(id, in_obj.username, in_obj.password_hash);
         Ok(user)
     }
 }

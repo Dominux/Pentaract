@@ -8,6 +8,8 @@ pub struct Config {
     pub port: u16,
     pub workers: u16,
     pub channel_capacity: u16,
+    pub superuser_name: String,
+    pub superuser_pass: String,
 }
 
 impl Config {
@@ -24,12 +26,16 @@ impl Config {
         let port = Self::get_env_var("PORT")?;
         let workers = Self::get_env_var("WORKERS")?;
         let channel_capacity = Self::get_env_var("CHANNEL_CAPACITY")?;
+        let superuser_name = Self::get_env_var("SUPERUSER_NAME")?;
+        let superuser_pass = Self::get_env_var("SUPERUSER_PASS")?;
 
         Ok(Self {
             db_uri,
             port,
             workers,
             channel_capacity,
+            superuser_name,
+            superuser_pass,
         })
     }
 

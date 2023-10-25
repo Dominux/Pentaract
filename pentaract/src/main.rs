@@ -3,7 +3,10 @@ use std::{
     sync::Arc,
 };
 
-use common::channels::StorageManagerSender;
+use common::{channels::StorageManagerSender, password_manager::PasswordManager};
+use errors::PentaractError;
+use models::users::InDBUser;
+use repositories::users::UsersRepository;
 use sqlx::postgres::PgPoolOptions;
 use tokio::{sync::mpsc, time};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -15,11 +18,12 @@ use crate::server::Server;
 mod common;
 mod config;
 mod errors;
+mod models;
+mod repositories;
 mod routers;
+mod schemas;
 mod server;
 mod templates;
-mod repositories;
-mod models;
 
 #[tokio::main]
 async fn main() {
@@ -37,12 +41,39 @@ async fn main() {
     let (tx, mut rx) = mpsc::channel::<StorageManagerSender>(config.channel_capacity.into());
 
     // set up connection pool
-    let db = PgPoolOptions::new()
-        .max_connections(config.workers.into())
-        .acquire_timeout(time::Duration::from_secs(3))
-        .connect(&config.db_uri)
-        .await
-        .expect("can't establish database connection");
+    let db = {
+        let db = PgPoolOptions::new()
+            .max_connections(config.workers.into())
+            .acquire_timeout(time::Duration::from_secs(3))
+            .connect(&config.db_uri)
+            .await
+            .expect("can't establish database connection");
+
+        tracing::debug!("established connection with database");
+
+        db
+    };
+
+    // creating a superuser
+    {
+        let password_hash = PasswordManager::generate(&config.superuser_pass).unwrap();
+        let user = InDBUser::new(config.superuser_name.clone(), password_hash);
+        let result = UsersRepository::new(&db).create(user).await;
+
+        match result {
+            Ok(_) => tracing::debug!("created superuser"),
+
+            // ignoring conflict error -> just skipping it
+            Err(e) if matches!(e, PentaractError::AlreadyExists(_)) => {
+                tracing::debug!("superuser already exists; skipping")
+            }
+
+            // in case of another error kind -> terminating process
+            _ => {
+                panic!("can't create superuser; terminating process")
+            }
+        };
+    }
 
     // running manager
     tokio::spawn(async move {
