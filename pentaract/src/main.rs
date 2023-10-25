@@ -23,6 +23,7 @@ mod repositories;
 mod routers;
 mod schemas;
 mod server;
+mod services;
 mod templates;
 
 #[tokio::main]
