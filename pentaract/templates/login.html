@@ -38,7 +38,7 @@
 {% block content %}
 
 <div class="center">
-  <form action="#">
+  <form action="/auth/login" method="POST">
 
     <div class="login-card mdl-card mdl-shadow--2dp">
       <div class="mdl-card__title title">
@@ -47,12 +47,12 @@
 
       <div class="mdl-card__supporting-text form-fields">
         <div class="mdl-textfield mdl-js-textfield">
-          <input class="mdl-textfield__input" type="username" id="username">
+          <input class="mdl-textfield__input" name="username" id="username">
           <label class="mdl-textfield__label" for="username">Username</label>
         </div>
 
         <div class="mdl-textfield mdl-js-textfield">
-          <input class="mdl-textfield__input" type="password" id="password" type="password">
+          <input class="mdl-textfield__input" type="password" name="password" id="password">
           <label class="mdl-textfield__label" for="password">Password</label>
         </div>
       </div>

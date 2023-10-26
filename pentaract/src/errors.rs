@@ -10,6 +10,8 @@ pub enum PentaractError {
 
     #[error("`{0}` already exists")]
     AlreadyExists(String),
+    #[error("`{0}` does not exist")]
+    DoesNotExist(String),
     #[error("not authenticated")]
     NotAuthenticated,
     #[error("unknown error")]

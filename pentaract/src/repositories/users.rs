@@ -40,4 +40,22 @@ impl<'d> UsersRepository<'d> {
         let user = User::new(id, in_obj.username, in_obj.password_hash);
         Ok(user)
     }
+
+    pub async fn get_by_username(&self, username: &str) -> PentaractResult<User> {
+        sqlx::query_as("SELECT * FROM users WHERE username = $1")
+            .bind(username)
+            .fetch_one(self.db)
+            .await
+            .map_err(Self::map_user_not_found)
+    }
+
+    fn map_user_not_found(e: sqlx::Error) -> PentaractError {
+        match e {
+            sqlx::Error::RowNotFound => PentaractError::DoesNotExist("such user".into()),
+            _ => {
+                tracing::error!("{e}");
+                PentaractError::Unknown
+            }
+        }
+    }
 }
