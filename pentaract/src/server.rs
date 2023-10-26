@@ -7,7 +7,7 @@ use tower::limit::ConcurrencyLimitLayer;
 use crate::{
     common::{
         channels::ClientSender,
-        routing::{app_state::AppState, middlewares::auth::auth_middleware},
+        routing::{app_state::AppState, middlewares::auth::logged_in_required},
     },
     routers::{auth::AuthRouter, storage_workers::StorageWorkersRouter},
 };
@@ -35,7 +35,7 @@ impl Server {
             )
             .route_layer(middleware::from_fn_with_state(
                 app_state.clone(),
-                auth_middleware,
+                logged_in_required,
             ))
             .nest("/auth", AuthRouter::get_router(app_state.clone()))
             .nest(

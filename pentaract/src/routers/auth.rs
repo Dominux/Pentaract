@@ -4,13 +4,17 @@ use askama::Template;
 use axum::{
     extract::State,
     http::HeaderMap,
+    middleware,
     response::{Html, IntoResponse, Redirect},
     routing::get,
     Form, Router,
 };
 
 use crate::{
-    common::{constants::ACCESS_TOKEN_NAME, routing::app_state::AppState},
+    common::{
+        constants::ACCESS_TOKEN_NAME,
+        routing::{app_state::AppState, middlewares::auth::logged_out_required},
+    },
     schemas::auth::LoginSchema,
     services::auth::AuthService,
     templates::login::LoginTemplate,
@@ -22,6 +26,10 @@ impl AuthRouter {
     pub fn get_router(state: Arc<AppState>) -> Router {
         Router::new()
             .route("/login", get(Self::get_login_page).post(Self::login))
+            .route_layer(middleware::from_fn_with_state(
+                state.clone(),
+                logged_out_required,
+            ))
             .with_state(state)
     }
 

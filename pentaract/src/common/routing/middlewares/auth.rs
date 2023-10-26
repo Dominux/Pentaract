@@ -17,7 +17,8 @@ use crate::{
     errors::{PentaractError, PentaractResult},
 };
 
-pub async fn auth_middleware<B>(
+/// Middleware that requires to be loggen in
+pub async fn logged_in_required<B>(
     State(state): State<Arc<AppState>>,
     mut req: Request<B>,
     next: Next<B>,
@@ -27,6 +28,18 @@ pub async fn auth_middleware<B>(
 
     req.extensions_mut().insert(auth_user);
     Ok(next.run(req).await)
+}
+
+/// Middleware that requires to be logged out
+pub async fn logged_out_required<B>(
+    State(state): State<Arc<AppState>>,
+    req: Request<B>,
+    next: Next<B>,
+) -> Result<Response, Redirect> {
+    match authenticate(req.headers(), &state.config.secret_key) {
+        Ok(_) => Err(Redirect::to("/")),
+        _ => Ok(next.run(req).await),
+    }
 }
 
 #[inline]

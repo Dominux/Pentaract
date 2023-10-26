@@ -9,7 +9,7 @@ use axum::{
 };
 
 use crate::{
-    common::routing::{app_state::AppState, middlewares::auth::auth_middleware},
+    common::routing::{app_state::AppState, middlewares::auth::logged_in_required},
     templates::storage_workers::list::StorageWorkersListTemplate,
 };
 
@@ -21,7 +21,7 @@ impl StorageWorkersRouter {
             .route("/", get(Self::list))
             .route_layer(middleware::from_fn_with_state(
                 state.clone(),
-                auth_middleware,
+                logged_in_required,
             ))
             .with_state(state)
     }
