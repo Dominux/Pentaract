@@ -3,14 +3,16 @@ use std::sync::Arc;
 use askama::Template;
 use axum::{
     extract::State,
-    http::{HeaderMap, StatusCode},
+    http::HeaderMap,
     response::{Html, IntoResponse, Redirect},
     routing::get,
     Form, Router,
 };
 
 use crate::{
-    common::routing::app_state::AppState, schemas::auth::LoginSchema, services::auth::AuthService,
+    common::{constants::ACCESS_TOKEN_NAME, routing::app_state::AppState},
+    schemas::auth::LoginSchema,
+    services::auth::AuthService,
     templates::login::LoginTemplate,
 };
 
@@ -38,9 +40,9 @@ impl AuthRouter {
 
             match login_result {
                 Ok(o) => o,
-                Err(e) => {
-                    let e: (StatusCode, String) = e.into();
-                    return e.into_response();
+                Err(_) => {
+                    // TODO: return login page with error message displayed via some sort of a toast
+                    return Redirect::to("/auth/login").into_response();
                 }
             }
         };
@@ -50,7 +52,7 @@ impl AuthRouter {
             let mut headers = HeaderMap::with_capacity(1);
             let max_age = expire_in.as_secs();
             let cookie_header = format!(
-                "access_token={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={max_age}"
+                "{ACCESS_TOKEN_NAME}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={max_age}"
             );
             headers.insert("Set-Cookie", cookie_header.parse().unwrap());
             headers

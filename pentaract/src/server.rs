@@ -1,11 +1,14 @@
 use std::{net::SocketAddr, sync::Arc};
 
-use axum::{routing::get, Router};
+use axum::{middleware, routing::get, Router};
 use tokio::{sync::oneshot, time};
 use tower::limit::ConcurrencyLimitLayer;
 
 use crate::{
-    common::{channels::ClientSender, routing::app_state::AppState},
+    common::{
+        channels::ClientSender,
+        routing::{app_state::AppState, middlewares::auth::auth_middleware},
+    },
     routers::{auth::AuthRouter, storage_workers::StorageWorkersRouter},
 };
 
@@ -30,6 +33,10 @@ impl Server {
                     resp_rx.await.unwrap()
                 }),
             )
+            .route_layer(middleware::from_fn_with_state(
+                app_state.clone(),
+                auth_middleware,
+            ))
             .nest("/auth", AuthRouter::get_router(app_state.clone()))
             .nest(
                 "/storage_workers",

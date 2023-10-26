@@ -41,8 +41,9 @@ impl JWTManager {
     }
 
     pub fn validate(token: &str, secret_key: &str) -> PentaractResult<AuthUser> {
-        let validation = Validation::new(Algorithm::HS512);
+        let validation = Validation::new(Algorithm::HS256);
         let decoding_key = DecodingKey::from_secret(secret_key.as_bytes());
+
         decode::<Claims>(token, &decoding_key, &validation)
             .map(|token_data| {
                 let id = token_data.claims.sub;
