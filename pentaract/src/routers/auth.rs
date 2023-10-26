@@ -34,7 +34,7 @@ impl AuthRouter {
     }
 
     async fn get_login_page() -> impl IntoResponse {
-        Html(LoginTemplate::new().render().unwrap())
+        Html(LoginTemplate::default().render().unwrap())
     }
 
     async fn login(
@@ -49,8 +49,12 @@ impl AuthRouter {
             match login_result {
                 Ok(o) => o,
                 Err(_) => {
-                    // TODO: return login page with error message displayed via some sort of a toast
-                    return Redirect::to("/auth/login").into_response();
+                    return Html(
+                        LoginTemplate::new(Some("Invalid credentials"))
+                            .render()
+                            .unwrap(),
+                    )
+                    .into_response();
                 }
             }
         };

@@ -18,7 +18,6 @@
 
   .login-card.mdl-card {
     border-radius: 8px;
-    padding: 2vw;
   }
 
   .form-fields {
@@ -46,6 +45,21 @@
       </div>
 
       <div class="mdl-card__supporting-text form-fields">
+        {% match error %}
+        {% when Some with (error_msg) %}
+        <div class="mdl-textfield mdl-js-textfield is-invalid">
+          <input class="mdl-textfield__input" name="username" id="username">
+          <label class="mdl-textfield__label" for="username">Username</label>
+          <span class="mdl-textfield__error">{{ error_msg }}</span>
+        </div>
+
+        <div class="mdl-textfield mdl-js-textfield is-invalid">
+          <input class="mdl-textfield__input" type="password" name="password" id="password">
+          <label class="mdl-textfield__label" for="password">Password</label>
+          <span class="mdl-textfield__error">{{ error_msg }}</span>
+        </div>
+
+        {% when None %}
         <div class="mdl-textfield mdl-js-textfield">
           <input class="mdl-textfield__input" name="username" id="username">
           <label class="mdl-textfield__label" for="username">Username</label>
@@ -55,6 +69,7 @@
           <input class="mdl-textfield__input" type="password" name="password" id="password">
           <label class="mdl-textfield__label" for="password">Password</label>
         </div>
+        {% endmatch %}
       </div>
 
       <div class="mdl-card__actions button-wrapper">
