@@ -1,6 +1,25 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block base_head %}
+<style>
+  .title-link {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .page-content {
+    margin-top: 5vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+
+{% block head %}{% endblock %}
+
+{% endblock %}
+
+{% block base_content %}
 
 <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
 

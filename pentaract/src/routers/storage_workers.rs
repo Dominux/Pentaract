@@ -10,7 +10,9 @@ use axum::{
 
 use crate::{
     common::routing::{app_state::AppState, middlewares::auth::logged_in_required},
-    templates::storage_workers::list::StorageWorkersListTemplate,
+    templates::storage_workers::{
+        create_form::StorageWorkersCreateFormTemplate, index::StorageWorkersListTemplate,
+    },
 };
 
 pub struct StorageWorkersRouter;
@@ -18,7 +20,8 @@ pub struct StorageWorkersRouter;
 impl StorageWorkersRouter {
     pub fn get_router(state: Arc<AppState>) -> Router {
         Router::new()
-            .route("/", get(Self::list))
+            .route("/", get(Self::index))
+            .route("/create", get(Self::get_create_form))
             .route_layer(middleware::from_fn_with_state(
                 state.clone(),
                 logged_in_required,
@@ -26,9 +29,13 @@ impl StorageWorkersRouter {
             .with_state(state)
     }
 
-    async fn list() -> impl IntoResponse {
+    async fn index() -> impl IntoResponse {
+        Html(StorageWorkersListTemplate::new(vec![]).render().unwrap())
+    }
+
+    async fn get_create_form() -> impl IntoResponse {
         Html(
-            StorageWorkersListTemplate::new(Some("Kirill"))
+            StorageWorkersCreateFormTemplate::default()
                 .render()
                 .unwrap(),
         )

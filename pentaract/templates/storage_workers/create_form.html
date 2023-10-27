@@ -1,0 +1,48 @@
+<div>
+
+  <h1>Register storage worker</h1>
+  <div>
+    First, you need to create a telegram bot by using <a href="https://telegram.me/BotFather">the BotFather</a>.<br />
+    Once you have done, he will provide you with a token.<br />
+    <strong>Remember that both name and token must be unique across your storage workers</strong>
+  </div>
+
+  <form action="/auth/login" method="POST" class="form">
+
+    {% match name_err %}
+    {% when Some with (error_msg) %}
+    <div class="mdl-textfield mdl-js-textfield is-invalid">
+      <input class="mdl-textfield__input" name="name" id="name">
+      <label class="mdl-textfield__label" for="name">Name</label>
+      <span class="mdl-textfield__error">{{ error_msg }}</span>
+    </div>
+
+    {% when None %}
+    <div class="mdl-textfield mdl-js-textfield">
+      <input class="mdl-textfield__input" name="name" id="name">
+      <label class="mdl-textfield__label" for="name">Name</label>
+    </div>
+    {% endmatch %}
+
+    {% match token_err %}
+    {% when Some with (error_msg) %}
+    <div class="mdl-textfield mdl-js-textfield is-invalid">
+      <input class="mdl-textfield__input" name="token" id="token">
+      <label class="mdl-textfield__label" for="token">Token</label>
+      <span class="mdl-textfield__error">{{ error_msg }}</span>
+    </div>
+
+    {% when None %}
+    <div class="mdl-textfield mdl-js-textfield">
+      <input class="mdl-textfield__input" name="token" id="token">
+      <label class="mdl-textfield__label" for="token">Token</label>
+    </div>
+    {% endmatch %}
+
+    <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">
+      Register
+    </button>
+
+  </form>
+
+</div>

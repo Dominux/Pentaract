@@ -1,0 +1,46 @@
+{% extends "logged_in_base.html" %}
+
+{% block title %}Storage workers{% endblock %}
+
+{% block head %}
+<style>
+  .demo-card-wide.mdl-card.card {
+    margin: 5vw auto;
+    min-width: 70%;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2vw;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if storage_workers.is_empty() %}
+
+<div class="demo-card-wide mdl-card mdl-shadow--2dp card" id="info-card">
+  <div class="mdl-card__title">
+    <h3 class="mdl-card__title-text">No storage workers yet</h3>
+  </div>
+  <div class="mdl-card__supporting-text">Storage workers are necessary for using Pentaract</div>
+
+  <div class="mdl-card__actions mdl-card--border">
+    <button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" hx-get="/storage_workers/create"
+      hx-trigger="click" hx-target="#info-card" hx-swap="outerHTML transition:true">Register service
+      worker</button>
+  </div>
+</div>
+
+{% else %}
+
+{% for storage_worker in storage_workers %}
+<span>{{ storage_worker.name }}</span>
+{% endfor %}
+
+{% endif %}
+
+{% endblock %}
