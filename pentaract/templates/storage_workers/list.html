@@ -1,0 +1,18 @@
+<table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+  <thead>
+    <tr>
+      <th class="mdl-data-table__cell--non-numeric">Name</th>
+      <th class="mdl-data-table__cell--non-numeric">Token</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    {% for storage_worker in storage_workers %}
+    <tr>
+      <td class="mdl-data-table__cell--non-numeric">{{ storage_worker.name }}</td>
+      <td class="mdl-data-table__cell--non-numeric">{{ storage_worker.token }}</td>
+    </tr>
+    {% endfor %}
+
+  </tbody>
+</table>

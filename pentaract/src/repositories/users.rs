@@ -1,6 +1,7 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::common::db::errors::map_not_found;
 use crate::errors::{PentaractError, PentaractResult};
 use crate::models::users::{InDBUser, User};
 
@@ -46,16 +47,6 @@ impl<'d> UsersRepository<'d> {
             .bind(username)
             .fetch_one(self.db)
             .await
-            .map_err(Self::map_user_not_found)
-    }
-
-    fn map_user_not_found(e: sqlx::Error) -> PentaractError {
-        match e {
-            sqlx::Error::RowNotFound => PentaractError::DoesNotExist("such user".into()),
-            _ => {
-                tracing::error!("{e}");
-                PentaractError::Unknown
-            }
-        }
+            .map_err(|e| map_not_found(e, "user"))
     }
 }

@@ -8,10 +8,17 @@ pub enum PentaractError {
     #[error("environment variable `{0}` cannot be parsed")]
     EnvVarParsingError(String),
 
+    #[error("user was removed")]
+    UserWasRemoved,
+
     #[error("`{0}` already exists")]
     AlreadyExists(String),
     #[error("`{0}` does not exist")]
     DoesNotExist(String),
+    #[error("User already has a storage worker with such name")]
+    StorageWorkerNameConflict,
+    #[error("Token must be unique")]
+    StorageWorkerTokenConflict,
     #[error("not authenticated")]
     NotAuthenticated,
     #[error("unknown error")]

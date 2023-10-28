@@ -1,4 +1,4 @@
-<div>
+<div id="form-wrapper">
 
   <h1>Register storage worker</h1>
   <div>
@@ -7,19 +7,20 @@
     <strong>Remember that both name and token must be unique across your storage workers</strong>
   </div>
 
-  <form action="/auth/login" method="POST" class="form">
+  <form action="/storage_workers" method="POST" class="form" hx-post="/storage_workers" hx-target="#form-wrapper"
+    hx-swap="outerHTML transition:true">
 
     {% match name_err %}
     {% when Some with (error_msg) %}
     <div class="mdl-textfield mdl-js-textfield is-invalid">
-      <input class="mdl-textfield__input" name="name" id="name">
+      <input class="mdl-textfield__input" name="name" id="name" required>
       <label class="mdl-textfield__label" for="name">Name</label>
       <span class="mdl-textfield__error">{{ error_msg }}</span>
     </div>
 
     {% when None %}
     <div class="mdl-textfield mdl-js-textfield">
-      <input class="mdl-textfield__input" name="name" id="name">
+      <input class="mdl-textfield__input" name="name" id="name" required>
       <label class="mdl-textfield__label" for="name">Name</label>
     </div>
     {% endmatch %}
@@ -27,14 +28,14 @@
     {% match token_err %}
     {% when Some with (error_msg) %}
     <div class="mdl-textfield mdl-js-textfield is-invalid">
-      <input class="mdl-textfield__input" name="token" id="token">
+      <input class="mdl-textfield__input" name="token" id="token" required>
       <label class="mdl-textfield__label" for="token">Token</label>
       <span class="mdl-textfield__error">{{ error_msg }}</span>
     </div>
 
     {% when None %}
     <div class="mdl-textfield mdl-js-textfield">
-      <input class="mdl-textfield__input" name="token" id="token">
+      <input class="mdl-textfield__input" name="token" id="token" required>
       <label class="mdl-textfield__label" for="token">Token</label>
     </div>
     {% endmatch %}
@@ -44,5 +45,14 @@
     </button>
 
   </form>
+
+  <script>
+    document.body.addEventListener('htmx:beforeOnLoad', (evt) => {
+      if (evt.detail.xhr.status === 409) {
+        evt.detail.shouldSwap = true;
+        evt.detail.isError = false;
+      }
+    });
+  </script>
 
 </div>

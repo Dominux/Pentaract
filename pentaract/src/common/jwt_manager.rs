@@ -15,6 +15,7 @@ struct Claims {
     pub(self) exp: usize,
 }
 
+#[derive(Clone)]
 pub struct AuthUser {
     pub id: Uuid,
 }

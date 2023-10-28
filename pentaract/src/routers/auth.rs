@@ -24,13 +24,18 @@ pub struct AuthRouter;
 
 impl AuthRouter {
     pub fn get_router(state: Arc<AppState>) -> Router {
-        Router::new()
-            .route("/login", get(Self::get_login_page).post(Self::login))
+        let login_router = Router::new()
+            .route("/", get(Self::get_login_page).post(Self::login))
             .route_layer(middleware::from_fn_with_state(
                 state.clone(),
                 logged_out_required,
             ))
-            .with_state(state)
+            .with_state(state);
+        let logout_router = Router::new().route("/", get(Self::logout));
+
+        Router::new()
+            .nest("/login", login_router)
+            .nest("/logout", logout_router)
     }
 
     async fn get_login_page() -> impl IntoResponse {
@@ -72,5 +77,19 @@ impl AuthRouter {
 
         // redirecting to home page
         (headers, Redirect::to("/")).into_response()
+    }
+
+    async fn logout() -> impl IntoResponse {
+        // setting deleting token in a cookie
+        let headers = {
+            let mut headers = HeaderMap::with_capacity(1);
+            let max_age = 0;
+            let cookie_header = format!("{ACCESS_TOKEN_NAME}=deleted; Path=/; Max-Age={max_age}");
+            headers.insert("Set-Cookie", cookie_header.parse().unwrap());
+            headers
+        };
+
+        // redirecting to home page
+        (headers, Redirect::to("/auth/login"))
     }
 }

@@ -45,7 +45,7 @@ async fn main() {
     let db = {
         let db = PgPoolOptions::new()
             .max_connections(config.workers.into())
-            .acquire_timeout(time::Duration::from_secs(3))
+            .acquire_timeout(time::Duration::from_secs(30))
             .connect(&config.db_uri)
             .await
             .expect("can't establish database connection");

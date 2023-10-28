@@ -30,16 +30,15 @@
 
   <div class="mdl-card__actions mdl-card--border">
     <button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" hx-get="/storage_workers/create"
-      hx-trigger="click" hx-target="#info-card" hx-swap="outerHTML transition:true">Register service
-      worker</button>
+      hx-trigger="click" hx-target="#info-card" hx-swap="outerHTML transition:true">
+      Register service worker
+    </button>
   </div>
 </div>
 
 {% else %}
 
-{% for storage_worker in storage_workers %}
-<span>{{ storage_worker.name }}</span>
-{% endfor %}
+{% include "storage_workers/list.html" %}
 
 {% endif %}
 
