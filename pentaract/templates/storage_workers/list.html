@@ -1,18 +1,26 @@
-<table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
-  <thead>
-    <tr>
-      <th class="mdl-data-table__cell--non-numeric">Name</th>
-      <th class="mdl-data-table__cell--non-numeric">Token</th>
-    </tr>
-  </thead>
-  <tbody>
+<div id="storage-workers-table">
+  <button class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored"
+    hx-get="/storage_workers/create" hx-trigger="click" hx-target="#storage-workers-table"
+    hx-swap="outerHTML transition:true">
+    <i class="material-icons">add</i>
+  </button>
 
-    {% for storage_worker in storage_workers %}
-    <tr>
-      <td class="mdl-data-table__cell--non-numeric">{{ storage_worker.name }}</td>
-      <td class="mdl-data-table__cell--non-numeric">{{ storage_worker.token }}</td>
-    </tr>
-    {% endfor %}
+  <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
+    <thead>
+      <tr>
+        <th class="mdl-data-table__cell--non-numeric">Name</th>
+        <th class="mdl-data-table__cell--non-numeric">Token</th>
+      </tr>
+    </thead>
+    <tbody>
 
-  </tbody>
-</table>
+      {% for storage_worker in storage_workers %}
+      <tr>
+        <td class="mdl-data-table__cell--non-numeric">{{ storage_worker.name }}</td>
+        <td class="mdl-data-table__cell--non-numeric">{{ storage_worker.token }}</td>
+      </tr>
+      {% endfor %}
+
+    </tbody>
+  </table>
+</div>

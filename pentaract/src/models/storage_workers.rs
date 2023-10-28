@@ -21,3 +21,14 @@ pub struct StorageWorker {
     pub user_id: uuid::Uuid,
     pub token: String,
 }
+
+impl StorageWorker {
+    pub fn new(id: uuid::Uuid, name: String, user_id: uuid::Uuid, token: String) -> Self {
+        Self {
+            id,
+            name,
+            user_id,
+            token,
+        }
+    }
+}

@@ -15,7 +15,7 @@ use crate::{
         jwt_manager::AuthUser,
         routing::{app_state::AppState, middlewares::auth::logged_in_required},
     },
-    errors::PentaractError,
+    errors::{PentaractError, PentaractResult},
     schemas::storage_workers::InStorageWorkerSchema,
     services::storage_workers::StorageWorkersService,
     templates::storage_workers::{
@@ -30,6 +30,7 @@ impl StorageWorkersRouter {
     pub fn get_router(state: Arc<AppState>) -> Router {
         Router::new()
             .route("/", get(Self::index).post(Self::create))
+            .route("/list", get(Self::list))
             .route("/create", get(Self::get_create_form))
             .route_layer(middleware::from_fn_with_state(
                 state.clone(),
@@ -93,15 +94,30 @@ impl StorageWorkersRouter {
             };
         };
 
-        let storage_workers = match service.list(&user).await {
-            Ok(sw) => sw,
-            Err(e) => return <(StatusCode, String)>::from(e).into_response(),
-        };
-        let page = Html(
-            StorageWorkersListTemplate::new(storage_workers)
-                .render()
-                .unwrap(),
-        );
-        (StatusCode::CREATED, page).into_response()
+        match Self::_list(service, &user).await {
+            Ok(page) => (StatusCode::CREATED, page).into_response(),
+            Err(e) => <(StatusCode, String)>::from(e).into_response(),
+        }
+    }
+
+    async fn list(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+    ) -> impl IntoResponse {
+        let service = StorageWorkersService::new(&state.db);
+        match Self::_list(service, &user).await {
+            Ok(page) => page.into_response(),
+            Err(e) => <(StatusCode, String)>::from(e).into_response(),
+        }
+    }
+
+    async fn _list<'a>(
+        service: StorageWorkersService<'a>,
+        user: &AuthUser,
+    ) -> PentaractResult<Html<String>> {
+        service
+            .list(&user)
+            .await
+            .map(|sw| Html(StorageWorkersListTemplate::new(sw).render().unwrap()))
     }
 }

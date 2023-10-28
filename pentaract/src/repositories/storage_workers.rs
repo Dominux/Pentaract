@@ -17,17 +17,17 @@ impl<'d> StorageWorkersRepository<'d> {
     pub async fn create(&self, in_obj: InStorageWorker) -> PentaractResult<StorageWorker> {
         let id = Uuid::new_v4();
 
-        sqlx::query_as(
+        sqlx::query(
             r#"
                 INSERT INTO storage_workers (id, name, token, user_id)
                 VALUES ($1, $2, $3, $4);
             "#,
         )
         .bind(id)
-        .bind(in_obj.name)
-        .bind(in_obj.token)
+        .bind(in_obj.name.clone())
+        .bind(in_obj.token.clone())
         .bind(in_obj.user_id)
-        .fetch_one(self.db)
+        .execute(self.db)
         .await
         .map_err(|e| match e {
             sqlx::Error::Database(dbe) if dbe.is_unique_violation() => {
@@ -40,7 +40,10 @@ impl<'d> StorageWorkersRepository<'d> {
                 tracing::error!("{e}");
                 PentaractError::Unknown
             }
-        })
+        })?;
+
+        let user = StorageWorker::new(id, in_obj.name, in_obj.user_id, in_obj.token);
+        Ok(user)
     }
 
     pub async fn list_by_user_id(&self, user_id: Uuid) -> PentaractResult<Vec<StorageWorker>> {
