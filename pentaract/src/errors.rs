@@ -15,6 +15,8 @@ pub enum PentaractError {
     AlreadyExists(String),
     #[error("`{0}` does not exist")]
     DoesNotExist(String),
+    #[error("User already has a storage with such name")]
+    StorageNameConflict,
     #[error("User already has a storage worker with such name")]
     StorageWorkerNameConflict,
     #[error("Token must be unique")]

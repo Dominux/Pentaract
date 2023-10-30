@@ -4,9 +4,17 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE storage_workers (
+CREATE TABLE storages (
     id      UUID         PRIMARY KEY,
     name    VARCHAR(255) NOT NULL,
-    token   VARCHAR(255) NOT NULL UNIQUE,
-    user_id UUID         REFERENCES users
+    chat_id BigInt       NOT NULL UNIQUE,
+    user_id UUID         NOT NULL REFERENCES users
+);
+
+CREATE TABLE storage_workers (
+    id         UUID         PRIMARY KEY,
+    name       VARCHAR(255) NOT NULL,
+    token      VARCHAR(255) NOT NULL UNIQUE,
+    user_id    UUID         NOT NULL REFERENCES users,
+    storage_id UUID         REFERENCES storages
 );

@@ -20,6 +20,17 @@
 
 <body>
   {% block base_content %} {% endblock %}
+
+  <!-- Small amount of hand-written JS 👉👈 -->
+  <script>
+    document.body.addEventListener('htmx:beforeOnLoad', (evt) => {
+      switch (evt.detail.xhr.status) {
+        case 409:
+          evt.detail.shouldSwap = true
+          evt.detail.isError = false
+      }
+    })
+  </script>
 </body>
 
 </html>

@@ -33,7 +33,12 @@ impl<'d> StorageWorkersService<'d> {
         }
 
         // creating storage worker
-        let in_model = InStorageWorker::new(in_schema.name, user.id, in_schema.token);
+        let in_model = InStorageWorker::new(
+            in_schema.name,
+            user.id,
+            in_schema.token,
+            in_schema.storage_id,
+        );
         self.repo.create(in_model).await
     }
 

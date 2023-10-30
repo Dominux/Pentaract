@@ -19,14 +19,15 @@ impl<'d> StorageWorkersRepository<'d> {
 
         sqlx::query(
             r#"
-                INSERT INTO storage_workers (id, name, token, user_id)
-                VALUES ($1, $2, $3, $4);
+                INSERT INTO storage_workers (id, name, token, user_id, storage_id)
+                VALUES ($1, $2, $3, $4, $5);
             "#,
         )
         .bind(id)
         .bind(in_obj.name.clone())
         .bind(in_obj.token.clone())
         .bind(in_obj.user_id)
+        .bind(in_obj.storage_id)
         .execute(self.db)
         .await
         .map_err(|e| match e {
@@ -34,7 +35,7 @@ impl<'d> StorageWorkersRepository<'d> {
                 PentaractError::StorageWorkerTokenConflict
             }
             sqlx::Error::Database(dbe) if dbe.is_foreign_key_violation() => {
-                PentaractError::UserWasRemoved
+                PentaractError::DoesNotExist("Such storage does not exist".to_string())
             }
             _ => {
                 tracing::error!("{e}");
@@ -42,8 +43,14 @@ impl<'d> StorageWorkersRepository<'d> {
             }
         })?;
 
-        let user = StorageWorker::new(id, in_obj.name, in_obj.user_id, in_obj.token);
-        Ok(user)
+        let sw = StorageWorker::new(
+            id,
+            in_obj.name,
+            in_obj.user_id,
+            in_obj.token,
+            in_obj.storage_id,
+        );
+        Ok(sw)
     }
 
     pub async fn list_by_user_id(&self, user_id: Uuid) -> PentaractResult<Vec<StorageWorker>> {

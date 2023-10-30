@@ -9,7 +9,7 @@ use crate::{
         channels::ClientSender,
         routing::{app_state::AppState, middlewares::auth::logged_in_required},
     },
-    routers::{auth::AuthRouter, storage_workers::StorageWorkersRouter},
+    routers::{auth::AuthRouter, storage_workers::StorageWorkersRouter, storages::StoragesRouter},
 };
 
 pub struct Server {
@@ -38,6 +38,7 @@ impl Server {
                 logged_in_required,
             ))
             .nest("/auth", AuthRouter::get_router(app_state.clone()))
+            .nest("/storages", StoragesRouter::get_router(app_state.clone()))
             .nest(
                 "/storage_workers",
                 StorageWorkersRouter::get_router(app_state.clone()),

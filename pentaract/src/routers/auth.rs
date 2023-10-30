@@ -79,17 +79,21 @@ impl AuthRouter {
         (headers, Redirect::to("/")).into_response()
     }
 
-    async fn logout() -> impl IntoResponse {
-        // setting deleting token in a cookie
-        let headers = {
-            let mut headers = HeaderMap::with_capacity(1);
-            let max_age = 0;
-            let cookie_header = format!("{ACCESS_TOKEN_NAME}=deleted; Path=/; Max-Age={max_age}");
-            headers.insert("Set-Cookie", cookie_header.parse().unwrap());
-            headers
-        };
+    pub async fn logout_for_htmx() -> impl IntoResponse {
+        let mut headers = Self::get_logout_headers();
+        headers.insert("HX-Redirect", "/auth/login".parse().unwrap());
+        headers
+    }
 
-        // redirecting to home page
-        (headers, Redirect::to("/auth/login"))
+    async fn logout() -> impl IntoResponse {
+        (Self::get_logout_headers(), Redirect::to("/auth/login"))
+    }
+
+    fn get_logout_headers() -> HeaderMap {
+        let mut headers = HeaderMap::with_capacity(1);
+        let max_age = 0;
+        let cookie_header = format!("{ACCESS_TOKEN_NAME}=deleted; Path=/; Max-Age={max_age}");
+        headers.insert("Set-Cookie", cookie_header.parse().unwrap());
+        headers
     }
 }

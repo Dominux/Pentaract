@@ -5,7 +5,7 @@ use axum::{
     extract::State,
     http::StatusCode,
     middleware,
-    response::{Html, IntoResponse, Redirect},
+    response::{Html, IntoResponse},
     routing::get,
     Extension, Form, Router,
 };
@@ -16,13 +16,16 @@ use crate::{
         routing::{app_state::AppState, middlewares::auth::logged_in_required},
     },
     errors::{PentaractError, PentaractResult},
+    models::storages::Storage,
     schemas::storage_workers::InStorageWorkerSchema,
-    services::storage_workers::StorageWorkersService,
+    services::{storage_workers::StorageWorkersService, storages::StoragesService},
     templates::storage_workers::{
         create_form::StorageWorkersCreateFormTemplate,
         index::{StorageWorkersIndexTemplate, StorageWorkersListTemplate},
     },
 };
+
+use super::auth::AuthRouter;
 
 pub struct StorageWorkersRouter;
 
@@ -50,9 +53,14 @@ impl StorageWorkersRouter {
         }
     }
 
-    async fn get_create_form() -> impl IntoResponse {
+    async fn get_create_form(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+    ) -> impl IntoResponse {
+        let service = StoragesService::new(&state.db);
+        let storages = Self::_list_storages(service, &user).await;
         Html(
-            StorageWorkersCreateFormTemplate::default()
+            StorageWorkersCreateFormTemplate::new(None, None, storages)
                 .render()
                 .unwrap(),
         )
@@ -68,28 +76,30 @@ impl StorageWorkersRouter {
 
         if let Err(e) = sw_creating_result {
             return match e {
-                PentaractError::StorageWorkerNameConflict => (
-                    StatusCode::CONFLICT,
-                    Html(
-                        StorageWorkersCreateFormTemplate::new(Some("This name isn't unique"), None)
-                            .render()
-                            .unwrap(),
-                    ),
-                )
-                    .into_response(),
-                PentaractError::StorageWorkerTokenConflict => (
-                    StatusCode::CONFLICT,
-                    Html(
-                        StorageWorkersCreateFormTemplate::new(
-                            None,
-                            Some("This token isn't unique"),
-                        )
-                        .render()
-                        .unwrap(),
-                    ),
-                )
-                    .into_response(),
-                PentaractError::UserWasRemoved => Redirect::to("/auth/logout").into_response(),
+                PentaractError::StorageWorkerNameConflict
+                | PentaractError::StorageWorkerTokenConflict => {
+                    let service = StoragesService::new(&state.db);
+                    let storages = Self::_list_storages(service, &user).await;
+
+                    let (name_err, token_err) = match e {
+                        PentaractError::StorageWorkerNameConflict => {
+                            (Some("This name is not unique"), None)
+                        }
+                        _ => (None, Some("This token is not unique")),
+                    };
+                    (
+                        StatusCode::CONFLICT,
+                        Html(
+                            StorageWorkersCreateFormTemplate::new(name_err, token_err, storages)
+                                .render()
+                                .unwrap(),
+                        ),
+                    )
+                        .into_response()
+                }
+                PentaractError::UserWasRemoved => {
+                    AuthRouter::logout_for_htmx().await.into_response()
+                }
                 _ => (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong").into_response(),
             };
         };
@@ -119,5 +129,9 @@ impl StorageWorkersRouter {
             .list(&user)
             .await
             .map(|sw| Html(StorageWorkersListTemplate::new(sw).render().unwrap()))
+    }
+
+    async fn _list_storages<'a>(service: StoragesService<'a>, user: &AuthUser) -> Vec<Storage> {
+        service.list(&user).await.map_or(vec![], |v| v)
     }
 }

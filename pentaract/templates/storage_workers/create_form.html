@@ -44,19 +44,20 @@
     </div>
     {% endmatch %}
 
+    <div class="mdl-textfield mdl-js-textfield">
+      <select name="storage_id" id="storage_id">
+
+        {% for storage in storages %}
+        <option value="{{ storage.id }}">{{ storage.name }}</option>
+        {% endfor %}
+
+      </select>
+      <label class="mdl-textfield__label" for="storage_id">Storage</label>
+    </div>
+
     <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">
       Register
     </button>
 
   </form>
-
-  <script>
-    document.body.addEventListener('htmx:beforeOnLoad', (evt) => {
-      if (evt.detail.xhr.status === 409) {
-        evt.detail.shouldSwap = true;
-        evt.detail.isError = false;
-      }
-    });
-  </script>
-
 </div>
