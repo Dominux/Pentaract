@@ -18,3 +18,19 @@ CREATE TABLE storage_workers (
     user_id    UUID         NOT NULL REFERENCES users,
     storage_id UUID         REFERENCES storages
 );
+
+CREATE TABLE files (
+    id          UUID    PRIMARY KEY,
+    path        VARCHAR NOT NULL,
+    storage_id  UUID    NOT NULL REFERENCES storages,
+    is_uploaded bool    NOT NULL,
+
+    UNIQUE (path, storage_id)
+);
+
+CREATE TABLE file_chunks (
+    id               UUID         PRIMARY KEY,
+    file_id          UUID         NOT NULL REFERENCES files,
+    telegram_file_id VARCHAR(255) NOT NULL,
+    position         SmallInt     NOT NULL
+);

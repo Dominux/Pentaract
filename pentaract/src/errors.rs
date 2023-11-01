@@ -23,6 +23,8 @@ pub enum PentaractError {
     StorageWorkerTokenConflict,
     #[error("not authenticated")]
     NotAuthenticated,
+    #[error("Telegram API error: `{0}`")]
+    TelegramAPIError(String),
     #[error("unknown error")]
     Unknown,
 }
@@ -36,6 +38,22 @@ impl From<PentaractError> for (StatusCode, String) {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Something went wrong".to_owned(),
             ),
+        }
+    }
+}
+
+impl From<reqwest::Error> for PentaractError {
+    fn from(e: reqwest::Error) -> Self {
+        match e.status() {
+            Some(e) if e.is_client_error() => PentaractError::TelegramAPIError(e.to_string()),
+            Some(e) => {
+                tracing::error!("{e}");
+                PentaractError::Unknown
+            }
+            None => {
+                tracing::error!("Unknow error");
+                PentaractError::Unknown
+            }
         }
     }
 }

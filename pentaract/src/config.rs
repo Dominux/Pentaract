@@ -14,6 +14,8 @@ pub struct Config {
     pub access_token_expire_in_secs: u32,
     pub refresh_token_expire_in_days: u16,
     pub secret_key: String,
+
+    pub telegram_api_base_url: String,
 }
 
 impl Config {
@@ -35,6 +37,7 @@ impl Config {
         let access_token_expire_in_secs = Self::get_env_var("ACCESS_TOKEN_EXPIRE_IN_SECS")?;
         let refresh_token_expire_in_days = Self::get_env_var("REFRESH_TOKEN_EXPIRE_IN_DAYS")?;
         let secret_key = Self::get_env_var("SECRET_KEY")?;
+        let telegram_api_base_url = Self::get_env_var("TELEGRAM_API_BASE_URL")?;
 
         Ok(Self {
             db_uri,
@@ -46,6 +49,7 @@ impl Config {
             access_token_expire_in_secs,
             refresh_token_expire_in_days,
             secret_key,
+            telegram_api_base_url,
         })
     }
 
