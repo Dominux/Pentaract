@@ -1,4 +1,5 @@
 {% if storages.is_empty() %}
+
 <div class="demo-card-wide mdl-card mdl-shadow--2dp card" id="info-card">
   <div class="mdl-card__title">
     <h3 class="mdl-card__title-text">No storages yet</h3>
@@ -14,30 +15,24 @@
 </div>
 
 {% else %}
+
 <div id="storages-table">
   <button class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored"
     hx-get="/storages/create" hx-trigger="click" hx-target="#storages-table" hx-swap="outerHTML transition:true">
     <i class="material-icons">add</i>
   </button>
 
-  <table class="mdl-data-table mdl-js-data-table mdl-shadow--2dp">
-    <thead>
-      <tr>
-        <th class="mdl-data-table__cell--non-numeric">Name</th>
-        <th class="mdl-data-table__cell--non-numeric">Chat id</th>
-      </tr>
-    </thead>
-    <tbody>
+  {% for storage in storages %}
 
-      {% for storage in storages %}
-      <tr>
-        <td class="mdl-data-table__cell--non-numeric">{{ storage.name }}</td>
-        <td class="mdl-data-table__cell--non-numeric">{{ storage.chat_id }}</td>
-      </tr>
-      {% endfor %}
+  <a class="demo-card-wide mdl-card mdl-shadow--2dp card title-link" href="/storages/{{ storage.id }}">
+    <div class="mdl-card__title">
+      <h3 class="mdl-card__title-text">{{ storage.name }}</h3>
+    </div>
+    <div class="mdl-card__supporting-text">{{ storage.chat_id }}</div>
+  </a>
 
-    </tbody>
-  </table>
+  {% endfor %}
+
 </div>
 
 {% endif %}

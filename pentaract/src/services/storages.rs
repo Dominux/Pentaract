@@ -1,4 +1,5 @@
 use sqlx::PgPool;
+use uuid::Uuid;
 
 use crate::{
     common::jwt_manager::AuthUser,
@@ -39,5 +40,9 @@ impl<'d> StoragesService<'d> {
 
     pub async fn list(&self, user: &AuthUser) -> PentaractResult<Vec<Storage>> {
         self.repo.list_by_user_id(user.id).await
+    }
+
+    pub async fn get(&self, id: Uuid, user: &AuthUser) -> PentaractResult<Storage> {
+        self.repo.get_by_id_and_user_id(id, user.id).await
     }
 }

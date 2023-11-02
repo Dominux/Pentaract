@@ -19,20 +19,6 @@ pub struct Server {
 impl Server {
     pub fn build_server(workers: usize, app_state: Arc<AppState>, tx: ClientSender) -> Self {
         let router = Router::new()
-            .route(
-                "/",
-                get(|| async move {
-                    let (resp_tx, resp_rx) = oneshot::channel();
-
-                    tracing::debug!("started");
-                    let _ = tx.send(resp_tx).await;
-
-                    // simulating some io operations
-                    time::sleep(time::Duration::from_millis(500)).await;
-
-                    resp_rx.await.unwrap()
-                }),
-            )
             .route_layer(middleware::from_fn_with_state(
                 app_state.clone(),
                 logged_in_required,

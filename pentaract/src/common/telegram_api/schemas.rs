@@ -4,8 +4,8 @@ use crate::common::types::ChatId;
 
 #[derive(Serialize)]
 pub struct InUploadSchema<'f> {
-    file: &'f [u8],
-    chat_id: ChatId,
+    pub file: &'f [u8],
+    pub chat_id: ChatId,
 }
 
 impl<'f> InUploadSchema<'f> {

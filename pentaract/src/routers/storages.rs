@@ -6,7 +6,7 @@ use axum::{
     http::StatusCode,
     middleware,
     response::{Html, IntoResponse},
-    routing::get,
+    routing::{get, post},
     Extension, Form, Router,
 };
 
@@ -24,7 +24,7 @@ use crate::{
     },
 };
 
-use super::auth::AuthRouter;
+use super::{auth::AuthRouter, files::FilesRouter};
 
 pub struct StoragesRouter;
 
@@ -34,6 +34,12 @@ impl StoragesRouter {
             .route("/", get(Self::index).post(Self::create))
             .route("/list", get(Self::list))
             .route("/create", get(Self::get_create_form))
+            .route("/:storage_id", get(FilesRouter::index))
+            .route(
+                "/:storage_id/upload_form",
+                get(FilesRouter::get_upload_form),
+            )
+            .route("/:storage_id/upload", post(FilesRouter::upload))
             .route_layer(middleware::from_fn_with_state(
                 state.clone(),
                 logged_in_required,

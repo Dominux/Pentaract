@@ -1,0 +1,18 @@
+<ul class="demo-list-control mdl-list">
+  {% for file in files %}
+
+  <li class="mdl-list__item">
+    <span class="mdl-list__item-primary-content">
+      {{ file.name }}
+    </span>
+    <span class="mdl-list__item-secondary-action">
+      <label class="mdl-button mdl-js-button mdl-button--icon">
+        <a href="/auth/logout" class="title-link">
+          <i class="material-icons">delete</i>
+        </a>
+      </label>
+    </span>
+  </li>
+
+  {% endfor %}
+</ul>

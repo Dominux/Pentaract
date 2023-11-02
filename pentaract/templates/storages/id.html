@@ -1,0 +1,26 @@
+{% extends "logged_in_base.html" %}
+
+{% block title %}Storage {{ name }}{% endblock %}
+
+{% block head %}
+<style>
+  .demo-list-control {
+    width: 300px;
+  }
+
+  .demo-list-radio {
+    display: inline;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div id="storage">
+  <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
+    hx-get="/storages/{{ id }}/upload_form" hx-trigger="click" hx-target="#storage" hx-swap="outerHTML transition:true">
+    Upload
+  </button>
+</div>
+
+{% endblock %}

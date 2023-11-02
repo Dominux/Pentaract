@@ -56,6 +56,15 @@ impl<'d> StoragesRepository<'d> {
             .map_err(|_| PentaractError::Unknown)
     }
 
+    pub async fn get_by_id_and_user_id(&self, id: Uuid, user_id: Uuid) -> PentaractResult<Storage> {
+        sqlx::query_as(format!("SELECT * FROM {TABLE} WHERE id = $1 AND user_id = $2").as_str())
+            .bind(id)
+            .bind(user_id)
+            .fetch_one(self.db)
+            .await
+            .map_err(|e| map_not_found(e, "storage_worker"))
+    }
+
     pub async fn get_by_name_and_user_id(
         &self,
         name: &str,

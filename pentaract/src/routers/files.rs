@@ -2,41 +2,53 @@ use std::{collections::HashMap, sync::Arc};
 
 use askama::Template;
 use axum::{
-    extract::{Multipart, State},
+    extract::{Multipart, Path, State},
     http::StatusCode,
-    middleware,
     response::{Html, IntoResponse},
-    routing::get,
-    Extension, Form, Router,
+    Extension,
 };
 use uuid::Uuid;
 
 use crate::{
-    common::{
-        jwt_manager::AuthUser,
-        routing::{app_state::AppState, middlewares::auth::logged_in_required},
-    },
-    schemas::files::{InFileSchema, InFileValidationSchema, IN_FILE_SCHEMA_FIELDS_AMOUNT},
+    common::{helpers::not_ok, jwt_manager::AuthUser, routing::app_state::AppState},
+    schemas::files::{InFileSchema, IN_FILE_SCHEMA_FIELDS_AMOUNT},
+    services::storages::StoragesService,
+    templates::{files::upload_form::UploadFormTemplate, storages::id::StorageTemplate},
 };
 
 pub struct FilesRouter;
 
 impl FilesRouter {
-    pub fn get_router(state: Arc<AppState>) -> Router {
-        Router::new()
-            .route("/", get(Self::index).post(Self::create))
-            .route("/list", get(Self::list))
-            .route("/create", get(Self::get_create_form))
-            .route_layer(middleware::from_fn_with_state(
-                state.clone(),
-                logged_in_required,
-            ))
-            .with_state(state)
-    }
-
-    async fn upload(
+    pub async fn index(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
+        Path(storage_id): Path<Uuid>,
+    ) -> impl IntoResponse {
+        match StoragesService::new(&state.db).get(storage_id, &user).await {
+            Err(e) => <(StatusCode, String)>::from(e).into_response(),
+            Ok(storage) => Html(
+                StorageTemplate::new(storage_id, &storage.name)
+                    .render()
+                    .unwrap(),
+            )
+            .into_response(),
+        }
+    }
+
+    pub async fn get_upload_form(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+        Path(storage_id): Path<Uuid>,
+    ) -> impl IntoResponse {
+        UploadFormTemplate::new(storage_id, None, None)
+            .render()
+            .unwrap()
+    }
+
+    pub async fn upload(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+        Path(storage_id): Path<Uuid>,
         mut multipart: Multipart,
     ) -> impl IntoResponse {
         // parsing and validating schema
@@ -53,48 +65,26 @@ impl FilesRouter {
             // validating
             let path = body_parts
                 .get("path")
-                .map(|path| {
-                    String::from_utf8(path.to_vec())
-                        .map_err(|_| "Path cannot be parsed".to_string())
-                })
-                .unwrap_or(Err("Path is required".to_string()));
+                .map(|path| String::from_utf8(path.to_vec()).map_err(|_| "Path cannot be parsed"))
+                .unwrap_or(Err("Path is required"));
 
-            let storage_id = body_parts
-                .get("storage_id")
-                .map(|storage_id| {
-                    let storage_id = String::from_utf8(storage_id.to_vec())
-                        .map_err(|_| "Storage id cannot be parsed".to_string())?;
-                    Uuid::parse_str(&storage_id)
-                        .map_err(|_| "Storage id cannot be parse".to_string())
-                })
-                .unwrap_or(Err("Storage id is required".to_string()));
+            let file = body_parts.get("file").ok_or("File is required");
 
-            let file = body_parts.get("file").ok_or("File is required".to_string());
-
-            if path.is_err() || storage_id.is_err() || file.is_err() {
+            if path.is_err() || file.is_err() {
                 // returning form with errors
-                let validation_schema = InFileValidationSchema {
-                    path_err: not_ok(path),
-                    storage_id_err: not_ok(storage_id),
-                    file_err: not_ok(file),
-                };
-                todo!("return template of upload form with errors");
-                return;
+                let form_with_errors =
+                    UploadFormTemplate::new(storage_id, not_ok(path), not_ok(file));
+                return Html(form_with_errors.render().unwrap()).into_response();
             }
 
             // now we have ensured that values are cleared
             InFileSchema {
+                storage_id,
                 file: file.unwrap().clone(),
                 path: path.unwrap(),
-                storage_id: storage_id.unwrap(),
             }
         };
-    }
-}
 
-fn not_ok<T, E>(res: Result<T, E>) -> Option<E> {
-    match res {
-        Err(e) => Some(e),
-        _ => None,
+        todo!()
     }
 }
