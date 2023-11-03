@@ -10,6 +10,7 @@ pub enum Method {
 pub struct UploadFileData {
     pub file_id: Uuid,
     pub user_id: Uuid,
+    pub file_data: Box<[u8]>,
 }
 
 pub struct ClientMessage {

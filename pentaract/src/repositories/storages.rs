@@ -4,6 +4,7 @@ use uuid::Uuid;
 use crate::common::db::errors::map_not_found;
 use crate::errors::{PentaractError, PentaractResult};
 use crate::models::storages::{InStorage, Storage};
+use crate::repositories::files::FILES_TABLE;
 
 pub const TABLE: &str = "storages";
 
@@ -76,5 +77,15 @@ impl<'d> StoragesRepository<'d> {
             .fetch_one(self.db)
             .await
             .map_err(|e| map_not_found(e, "storage_worker"))
+    }
+
+    pub async fn get_by_file_id(&self, file_id: Uuid) -> PentaractResult<Storage> {
+        sqlx::query_as(
+            format!("SELECT * FROM {TABLE} JOIN {FILES_TABLE} AS f WHERE f.id = $1").as_str(),
+        )
+        .bind(file_id)
+        .fetch_one(self.db)
+        .await
+        .map_err(|e| map_not_found(e, "storage_worker"))
     }
 }

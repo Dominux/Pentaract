@@ -1,8 +1,10 @@
 use sqlx::PgPool;
 
 use crate::{
-    common::channels::{ClientMessage, StorageManagerListener},
+    common::channels::{ClientMessage, Method, StorageManagerListener, UploadFileData},
     config::Config,
+    errors::PentaractResult,
+    services::storage_manager::StorageManagerService,
 };
 
 pub struct StorageManager {
@@ -26,6 +28,16 @@ impl StorageManager {
     }
 
     async fn handle_msg(&self, msg: ClientMessage) {
-        // msg.
+        let result = match msg.method {
+            Method::UploadFile(data) => self.upload(data).await,
+        };
+
+        let _ = msg.tx.send(result);
+    }
+
+    async fn upload(&self, data: UploadFileData) -> PentaractResult<()> {
+        StorageManagerService::new(&self.db, &self.config.telegram_api_base_url)
+            .upload(data)
+            .await
     }
 }
