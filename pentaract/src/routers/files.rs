@@ -12,7 +12,7 @@ use uuid::Uuid;
 use crate::{
     common::{helpers::not_ok, jwt_manager::AuthUser, routing::app_state::AppState},
     schemas::files::{InFileSchema, IN_FILE_SCHEMA_FIELDS_AMOUNT},
-    services::storages::StoragesService,
+    services::{files::FilesService, storages::StoragesService},
     templates::{files::upload_form::UploadFormTemplate, storages::id::StorageTemplate},
 };
 
@@ -85,6 +85,11 @@ impl FilesRouter {
             }
         };
 
-        todo!()
+        // do all other stuff
+        let _ = FilesService::new(&state.db, state.tx.clone())
+            .upload(in_schema, &user)
+            .await;
+
+        (StatusCode::CREATED).into_response()
     }
 }

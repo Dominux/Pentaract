@@ -7,6 +7,7 @@ use crate::{
         telegram_api::{bot_api::TelegramBotApi, schemas::InUploadSchema},
     },
     errors::{PentaractError, PentaractResult},
+    models::file_chunks::FileChunk,
     repositories::{
         files::FilesRepository, storage_workers::StorageWorkersRepository,
         storages::StoragesRepository,
@@ -44,7 +45,8 @@ impl<'d> StorageManagerService<'d> {
         let bytes_chunks = data.file_data.chunks(self.chunk_size);
 
         // 3. uploading by chunks
-        for bytes_chunk in bytes_chunks {
+        let mut chunks = Vec::with_capacity(bytes_chunks.len());
+        for (position, bytes_chunk) in bytes_chunks.enumerate() {
             let token = self.get_token(data.user_id).await?;
 
             let in_schema = InUploadSchema::new(bytes_chunk, storage.chat_id);
@@ -52,10 +54,17 @@ impl<'d> StorageManagerService<'d> {
                 .upload(&in_schema)
                 .await?;
 
-            todo!("add saving chunks")
+            let chunk = FileChunk::new(
+                Uuid::new_v4(),
+                data.file_id,
+                document.file_id,
+                position as i32,
+            );
+            chunks.push(chunk)
         }
 
-        Ok(())
+        // 4. saving chunks to db
+        self.files_repo.create_chunks_batch(chunks).await
     }
 
     async fn get_token(&self, user_id: Uuid) -> PentaractResult<String> {

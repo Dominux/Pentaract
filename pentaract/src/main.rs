@@ -3,20 +3,17 @@ use std::{
     sync::Arc,
 };
 
-use common::{
-    channels::{ClientMessage, StorageManagerSender},
-    password_manager::PasswordManager,
-};
+use common::{channels::ClientMessage, db::pool::get_pool, password_manager::PasswordManager};
 use errors::PentaractError;
 use models::users::InDBUser;
 use repositories::users::UsersRepository;
-use sqlx::postgres::PgPoolOptions;
 use tokio::{sync::mpsc, time};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::common::routing::app_state::AppState;
 use crate::config::Config;
 use crate::server::Server;
+use crate::storage_manager::StorageManager;
 
 mod common;
 mod config;
@@ -43,21 +40,15 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let (tx, mut rx) = mpsc::channel::<ClientMessage>(config.channel_capacity.into());
+    let (tx, rx) = mpsc::channel::<ClientMessage>(config.channel_capacity.into());
 
     // set up connection pool
-    let db = {
-        let db = PgPoolOptions::new()
-            .max_connections(config.workers.into())
-            .acquire_timeout(time::Duration::from_secs(30))
-            .connect(&config.db_uri)
-            .await
-            .expect("can't establish database connection");
-
-        tracing::debug!("established connection with database");
-
-        db
-    };
+    let db = get_pool(
+        &config.db_uri,
+        config.workers.into(),
+        time::Duration::from_secs(30),
+    )
+    .await;
 
     // creating a superuser
     {
@@ -81,17 +72,27 @@ async fn main() {
     }
 
     // running manager
+    let config_copy = config.clone();
     tokio::spawn(async move {
-        tracing::debug!("manager ran");
+        let db = get_pool(
+            &config_copy.db_uri,
+            config.workers.into(),
+            time::Duration::from_secs(30),
+        )
+        .await;
+        let mut manager = StorageManager::new(rx, db, config_copy);
+
+        tracing::debug!("running manager");
+        manager.run().await;
     });
 
     let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), config.port);
 
     let server = {
         let workers = config.workers;
-        let app_state = AppState::new(db, config);
+        let app_state = AppState::new(db, config, tx);
         let shared_state = Arc::new(app_state);
-        Server::build_server(workers.into(), shared_state, tx)
+        Server::build_server(workers.into(), shared_state)
     };
 
     server.run(&addr).await

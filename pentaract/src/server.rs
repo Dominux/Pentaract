@@ -1,14 +1,10 @@
 use std::{net::SocketAddr, sync::Arc};
 
-use axum::{middleware, routing::get, Router};
-use tokio::{sync::oneshot, time};
+use axum::{middleware, Router};
 use tower::limit::ConcurrencyLimitLayer;
 
 use crate::{
-    common::{
-        channels::ClientSender,
-        routing::{app_state::AppState, middlewares::auth::logged_in_required},
-    },
+    common::routing::{app_state::AppState, middlewares::auth::logged_in_required},
     routers::{auth::AuthRouter, storage_workers::StorageWorkersRouter, storages::StoragesRouter},
 };
 
@@ -17,7 +13,7 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn build_server(workers: usize, app_state: Arc<AppState>, tx: ClientSender) -> Self {
+    pub fn build_server(workers: usize, app_state: Arc<AppState>) -> Self {
         let router = Router::new()
             .route_layer(middleware::from_fn_with_state(
                 app_state.clone(),

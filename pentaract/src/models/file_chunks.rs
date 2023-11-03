@@ -1,21 +1,5 @@
 use crate::common::types::Position;
 
-pub struct InFileChunk {
-    pub file_id: uuid::Uuid,
-    pub telegram_file_id: String,
-    pub position: Position,
-}
-
-impl InFileChunk {
-    pub fn new(file_id: uuid::Uuid, telegram_file_id: String, position: Position) -> Self {
-        Self {
-            file_id,
-            telegram_file_id,
-            position,
-        }
-    }
-}
-
 #[derive(Debug, sqlx::FromRow)]
 pub struct FileChunk {
     pub id: uuid::Uuid,

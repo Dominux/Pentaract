@@ -1,7 +1,8 @@
-use sqlx::PgPool;
+use sqlx::{PgPool, QueryBuilder};
 use uuid::Uuid;
 
 use crate::errors::{PentaractError, PentaractResult};
+use crate::models::file_chunks::FileChunk;
 use crate::models::files::{File, InFile};
 
 pub const FILES_TABLE: &str = "files";
@@ -54,5 +55,35 @@ impl<'d> FilesRepository<'d> {
             .fetch_all(self.db)
             .await
             .map_err(|_| PentaractError::Unknown)
+    }
+
+    pub async fn create_chunks_batch(&self, chunks: Vec<FileChunk>) -> PentaractResult<()> {
+        QueryBuilder::new(
+            format!("INSERT INTO {CHUNKS_TABLE} (id, file_id, telegram_file_id, position)")
+                .as_str(),
+        )
+        .push_values(chunks, |mut q, chunk| {
+            q.push_bind(chunk.id)
+                .push_bind(chunk.file_id)
+                .push_bind(chunk.telegram_file_id)
+                .push_bind(chunk.position);
+        })
+        .build()
+        .execute(self.db)
+        .await
+        .map_err(|_| PentaractError::Unknown)?;
+
+        Ok(())
+    }
+
+    pub async fn set_as_uploaded(&self, file_id: Uuid) -> PentaractResult<()> {
+        sqlx::query(
+            format!("UPDATE {FILES_TABLE} SET is_uploaded = true WHERE file_id = $1").as_str(),
+        )
+        .bind(file_id)
+        .execute(self.db)
+        .await
+        .map_err(|_| PentaractError::Unknown)
+        .map(|_| ())
     }
 }
