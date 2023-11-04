@@ -86,9 +86,12 @@ impl FilesRouter {
         };
 
         // do all other stuff
-        let _ = FilesService::new(&state.db, state.tx.clone())
+        if let Err(e) = FilesService::new(&state.db, state.tx.clone())
             .upload(in_schema, &user)
-            .await;
+            .await
+        {
+            return <(StatusCode, String)>::from(e).into_response();
+        };
 
         (StatusCode::CREATED).into_response()
     }

@@ -20,4 +20,5 @@ RUN cargo build --target x86_64-unknown-linux-musl --release
 # We do not need the Rust toolchain to run the binary!
 FROM scratch AS runtime
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/pentaract /
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 ENTRYPOINT ["/pentaract"]

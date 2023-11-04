@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use askama::Template;
 use axum::{
-    extract::State,
+    extract::{DefaultBodyLimit, State},
     http::StatusCode,
     middleware,
     response::{Html, IntoResponse},
@@ -40,6 +40,7 @@ impl StoragesRouter {
                 get(FilesRouter::get_upload_form),
             )
             .route("/:storage_id/upload", post(FilesRouter::upload))
+            .layer(DefaultBodyLimit::disable())
             .route_layer(middleware::from_fn_with_state(
                 state.clone(),
                 logged_in_required,

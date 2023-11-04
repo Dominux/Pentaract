@@ -15,16 +15,16 @@ pub struct Server {
 impl Server {
     pub fn build_server(workers: usize, app_state: Arc<AppState>) -> Self {
         let router = Router::new()
-            .route_layer(middleware::from_fn_with_state(
-                app_state.clone(),
-                logged_in_required,
-            ))
             .nest("/auth", AuthRouter::get_router(app_state.clone()))
             .nest("/storages", StoragesRouter::get_router(app_state.clone()))
             .nest(
                 "/storage_workers",
                 StorageWorkersRouter::get_router(app_state.clone()),
             )
+            .route_layer(middleware::from_fn_with_state(
+                app_state.clone(),
+                logged_in_required,
+            ))
             .layer(ConcurrencyLimitLayer::new(workers.into()));
 
         Self { router }

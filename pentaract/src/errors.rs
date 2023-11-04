@@ -36,10 +36,13 @@ impl From<PentaractError> for (StatusCode, String) {
         match &e {
             PentaractError::AlreadyExists(_) => (StatusCode::CONFLICT, e.to_string()),
             PentaractError::NotAuthenticated => (StatusCode::UNAUTHORIZED, e.to_string()),
-            _ => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Something went wrong".to_owned(),
-            ),
+            _ => {
+                tracing::error!("{e}");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Something went wrong".to_owned(),
+                )
+            }
         }
     }
 }
@@ -48,12 +51,8 @@ impl From<reqwest::Error> for PentaractError {
     fn from(e: reqwest::Error) -> Self {
         match e.status() {
             Some(e) if e.is_client_error() => PentaractError::TelegramAPIError(e.to_string()),
-            Some(e) => {
+            Some(_) | None => {
                 tracing::error!("{e}");
-                PentaractError::Unknown
-            }
-            None => {
-                tracing::error!("Unknow error");
                 PentaractError::Unknown
             }
         }

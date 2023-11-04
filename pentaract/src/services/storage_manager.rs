@@ -2,10 +2,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
-    common::{
-        channels::UploadFileData,
-        telegram_api::{bot_api::TelegramBotApi, schemas::InUploadSchema},
-    },
+    common::{channels::UploadFileData, telegram_api::bot_api::TelegramBotApi},
     errors::{PentaractError, PentaractResult},
     models::file_chunks::FileChunk,
     repositories::{
@@ -49,9 +46,8 @@ impl<'d> StorageManagerService<'d> {
         for (position, bytes_chunk) in bytes_chunks.enumerate() {
             let token = self.get_token(data.user_id).await?;
 
-            let in_schema = InUploadSchema::new(bytes_chunk, storage.chat_id);
             let document = TelegramBotApi::new(self.telegram_baseurl, &token)
-                .upload(&in_schema)
+                .upload(bytes_chunk, storage.chat_id)
                 .await?;
 
             let chunk = FileChunk::new(

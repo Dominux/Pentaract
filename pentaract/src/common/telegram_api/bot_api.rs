@@ -1,6 +1,8 @@
-use crate::errors::PentaractResult;
+use reqwest::multipart;
 
-use super::schemas::{InUploadSchema, UploadBodySchema, UploadSchema};
+use crate::{common::types::ChatId, errors::PentaractResult};
+
+use super::schemas::{UploadBodySchema, UploadSchema};
 
 pub struct TelegramBotApi<'t> {
     base_url: &'t str,
@@ -12,12 +14,25 @@ impl<'t> TelegramBotApi<'t> {
         Self { base_url, token }
     }
 
-    pub async fn upload(&self, in_schema: &'t InUploadSchema<'t>) -> PentaractResult<UploadSchema> {
-        let url = self.build_url("", "sendDocument");
+    pub async fn upload(&self, file: &[u8], chat_id: ChatId) -> PentaractResult<UploadSchema> {
+        // inserting 100 between minus sign and chat id
+        // cause telegram devs are complete retards and it works this way only
+        //
+        // https://stackoverflow.com/a/65965402/12255756
+        let chat_id = {
+            let n = chat_id.abs().checked_ilog10().unwrap_or(0) + 1;
+            chat_id - (100 * ChatId::from(10).pow(n))
+        };
 
+        let url = self.build_url("bot", "sendDocument");
+
+        let file_part = multipart::Part::bytes(file.to_vec()).file_name("who_cares.bin");
+        let form = multipart::Form::new()
+            .text("chat_id", chat_id.to_string())
+            .part("document", file_part);
         let body: UploadBodySchema = reqwest::Client::new()
             .post(url)
-            .form(in_schema)
+            .multipart(form)
             .send()
             .await?
             .json()
@@ -27,10 +42,10 @@ impl<'t> TelegramBotApi<'t> {
 
     pub async fn download(&self, file_id: i64) -> PentaractResult<()> {
         // getting file path
-        let url = self.build_url("", "getFile");
+        let url = self.build_url("bot", "getFile");
 
         // downloading the file itself
-        let url = self.build_url("/file", "");
+        let url = self.build_url("file/bot", "");
         todo!()
     }
 
@@ -38,6 +53,6 @@ impl<'t> TelegramBotApi<'t> {
 
     #[inline]
     fn build_url(&self, pre: &str, relative: &str) -> String {
-        format!("{pre}/{}{}/{relative}", self.base_url, self.token)
+        format!("{}/{pre}{}/{relative}", self.base_url, self.token)
     }
 }

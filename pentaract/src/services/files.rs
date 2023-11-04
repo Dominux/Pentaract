@@ -6,7 +6,7 @@ use crate::{
         channels::{ClientMessage, ClientSender, Method, UploadFileData},
         jwt_manager::AuthUser,
     },
-    errors::{PentaractError, PentaractResult},
+    errors::PentaractResult,
     models::files::InFile,
     repositories::files::FilesRepository,
     schemas::files::InFileSchema,
@@ -47,12 +47,20 @@ impl<'d> FilesService<'d> {
         let _ = self.tx.send(message).await;
 
         // 3. waiting for a storage manager result
-        if let Err(e) = resp_rx.await.unwrap() {
-            tracing::error!("{e}");
-            return Err(e);
-        }
+        if let Err(e) = resp_rx.await.unwrap().and({
+            tracing::debug!("file loaded successfully");
 
-        // 4. setting file as uploaded
-        self.repo.set_as_uploaded(file.id).await
+            // 4. setting file as uploaded
+            self.repo.set_as_uploaded(file.id).await
+        }) {
+            tracing::error!("{e}");
+
+            // fallback logic: deleting file
+            let _ = self.repo.delete(file.id).await;
+
+            return Err(e);
+        };
+
+        Ok(())
     }
 }

@@ -77,13 +77,20 @@ impl<'d> FilesRepository<'d> {
     }
 
     pub async fn set_as_uploaded(&self, file_id: Uuid) -> PentaractResult<()> {
-        sqlx::query(
-            format!("UPDATE {FILES_TABLE} SET is_uploaded = true WHERE file_id = $1").as_str(),
-        )
-        .bind(file_id)
-        .execute(self.db)
-        .await
-        .map_err(|_| PentaractError::Unknown)
-        .map(|_| ())
+        sqlx::query(format!("UPDATE {FILES_TABLE} SET is_uploaded = true WHERE id = $1").as_str())
+            .bind(file_id)
+            .execute(self.db)
+            .await
+            .map_err(|_| PentaractError::Unknown)
+            .map(|_| ())
+    }
+
+    pub async fn delete(&self, file_id: Uuid) -> PentaractResult<()> {
+        sqlx::query(format!("DELETE FROM {FILES_TABLE} WHERE id = $1").as_str())
+            .bind(file_id)
+            .execute(self.db)
+            .await
+            .map_err(|_| PentaractError::Unknown)
+            .map(|_| ())
     }
 }
