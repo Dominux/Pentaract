@@ -11,7 +11,7 @@ pub enum PentaractError {
     #[error("user was removed")]
     UserWasRemoved,
 
-    #[error("`{0}` already exists")]
+    #[error("{0} already exists")]
     AlreadyExists(String),
     #[error("`{0}` does not exist")]
     DoesNotExist(String),
@@ -27,6 +27,8 @@ pub enum PentaractError {
     TelegramAPIError(String),
     #[error("You need to add at least 1 storage worker")]
     NoStorageWorkers,
+    #[error("Invalid path")]
+    InvalidPath,
     #[error("unknown error")]
     Unknown,
 }

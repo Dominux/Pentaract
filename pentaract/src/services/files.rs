@@ -6,7 +6,7 @@ use crate::{
         channels::{ClientMessage, ClientSender, Method, UploadFileData},
         jwt_manager::AuthUser,
     },
-    errors::PentaractResult,
+    errors::{PentaractError, PentaractResult},
     models::files::InFile,
     repositories::files::FilesRepository,
     schemas::files::InFileSchema,
@@ -24,6 +24,11 @@ impl<'d> FilesService<'d> {
     }
 
     pub async fn upload(&self, in_schema: InFileSchema, user: &AuthUser) -> PentaractResult<()> {
+        // 0. path validation
+        if Self::validate_filepath(&in_schema.path) {
+            return Err(PentaractError::InvalidPath);
+        }
+
         // 1. saving file in db
         let in_file = InFile::new(in_schema.path, in_schema.storage_id);
         let file = self.repo.create_file(in_file).await?;
@@ -62,5 +67,13 @@ impl<'d> FilesService<'d> {
         };
 
         Ok(())
+    }
+
+    pub fn validate_filepath(path: &str) -> bool {
+        Self::validate_path(path) && !path.ends_with(r"/")
+    }
+
+    pub fn validate_path(path: &str) -> bool {
+        !path.starts_with(r"/") && !path.contains(r"//")
     }
 }

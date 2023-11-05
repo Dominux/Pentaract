@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use crate::{
     common::{helpers::not_ok, jwt_manager::AuthUser, routing::app_state::AppState},
+    errors::PentaractError,
     schemas::files::{InFileSchema, IN_FILE_SCHEMA_FIELDS_AMOUNT},
     services::{files::FilesService, storages::StoragesService},
     templates::{files::upload_form::UploadFormTemplate, storages::id::StorageTemplate},
@@ -90,7 +91,17 @@ impl FilesRouter {
             .upload(in_schema, &user)
             .await
         {
-            return <(StatusCode, String)>::from(e).into_response();
+            return match e {
+                PentaractError::AlreadyExists(_) | PentaractError::InvalidPath => {
+                    return Html(
+                        UploadFormTemplate::new(storage_id, Some(&e.to_string()), None)
+                            .render()
+                            .unwrap(),
+                    )
+                    .into_response()
+                }
+                _ => <(StatusCode, String)>::from(e).into_response(),
+            };
         };
 
         (StatusCode::CREATED).into_response()

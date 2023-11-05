@@ -39,6 +39,9 @@ impl<'d> FilesRepository<'d> {
             sqlx::Error::Database(dbe) if dbe.is_foreign_key_violation() => {
                 PentaractError::DoesNotExist("such storage".to_string())
             }
+            sqlx::Error::Database(dbe) if dbe.is_unique_violation() => {
+                PentaractError::AlreadyExists("File with such name".to_string())
+            }
             _ => {
                 tracing::error!("{e}");
                 PentaractError::Unknown
