@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::errors::{PentaractError, PentaractResult};
 use crate::models::file_chunks::FileChunk;
-use crate::models::files::{File, InFile};
+use crate::models::files::{FSElement, File, InFile};
 
 pub const FILES_TABLE: &str = "files";
 pub const CHUNKS_TABLE: &str = "file_chunks";
@@ -52,14 +52,6 @@ impl<'d> FilesRepository<'d> {
         Ok(storage)
     }
 
-    pub async fn list_by_storage_id(&self, storage_id: Uuid) -> PentaractResult<Vec<File>> {
-        sqlx::query_as(format!("SELECT * FROM {FILES_TABLE} WHERE storage_id = $1").as_str())
-            .bind(storage_id)
-            .fetch_all(self.db)
-            .await
-            .map_err(|_| PentaractError::Unknown)
-    }
-
     pub async fn create_chunks_batch(&self, chunks: Vec<FileChunk>) -> PentaractResult<()> {
         QueryBuilder::new(
             format!("INSERT INTO {CHUNKS_TABLE} (id, file_id, telegram_file_id, position)")
@@ -77,6 +69,33 @@ impl<'d> FilesRepository<'d> {
         .map_err(|_| PentaractError::Unknown)?;
 
         Ok(())
+    }
+
+    /// NOTE:
+    ///
+    /// `prefix` must be without leading and trailing slashes
+    pub async fn list_dir(
+        &self,
+        storage_id: Uuid,
+        prefix: &str,
+    ) -> PentaractResult<Vec<FSElement>> {
+        let split_position = prefix.matches("/").count();
+
+        let query = format!(
+            "
+            SELECT DISTINCT (
+                SPLIT_PART(path, '/', {split_position}) AS path, 
+                $1 || split_part(path, '/', {split_position}) = path as is_file 
+            ) FROM {FILES_TABLE} 
+            WHERE storage_id = $2 AND path LIKE '$1/%' AND is_uploaded;
+        "
+        );
+        sqlx::query_as(&query)
+            .bind(prefix)
+            .bind(storage_id)
+            .fetch_all(self.db)
+            .await
+            .map_err(|_| PentaractError::Unknown)
     }
 
     pub async fn set_as_uploaded(&self, file_id: Uuid) -> PentaractResult<()> {

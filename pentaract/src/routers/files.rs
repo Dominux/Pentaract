@@ -25,21 +25,19 @@ impl FilesRouter {
         Extension(user): Extension<AuthUser>,
         Path((storage_id, path)): Path<(Uuid, String)>,
     ) -> impl IntoResponse {
+        // dynamic path resolution
         let (root_path, path) = path.split_once("/").unwrap_or((&path, ""));
         if root_path != "files" {
             return (StatusCode::NOT_FOUND, "Not found").into_response();
         };
 
-        Self::list(state, user, storage_id, path.to_string()).await
+        Self::list(state, user, storage_id, path).await
     }
 
-    async fn list(
-        state: Arc<AppState>,
-        user: AuthUser,
-        storage_id: Uuid,
-        path: String,
-    ) -> Response {
-        println!("{path}");
+    async fn list(state: Arc<AppState>, user: AuthUser, storage_id: Uuid, path: &str) -> Response {
+        let result = FilesService::new(&state.db, state.tx.clone())
+            .list_dir(storage_id, path)
+            .await;
 
         match StoragesService::new(&state.db).get(storage_id, &user).await {
             Err(e) => <(StatusCode, String)>::from(e).into_response(),

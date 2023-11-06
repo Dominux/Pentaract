@@ -27,3 +27,9 @@ impl File {
         }
     }
 }
+
+#[derive(Debug, sqlx::FromRow)]
+pub struct FSElement {
+    pub path: String,
+    pub is_file: bool,
+}

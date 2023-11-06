@@ -1,5 +1,6 @@
 use sqlx::PgPool;
 use tokio::sync::oneshot;
+use uuid::Uuid;
 
 use crate::{
     common::{
@@ -7,7 +8,7 @@ use crate::{
         jwt_manager::AuthUser,
     },
     errors::{PentaractError, PentaractResult},
-    models::files::InFile,
+    models::files::{FSElement, InFile},
     repositories::files::FilesRepository,
     schemas::files::InFileSchema,
 };
@@ -69,11 +70,19 @@ impl<'d> FilesService<'d> {
         Ok(())
     }
 
-    pub fn validate_filepath(path: &str) -> bool {
+    pub async fn list_dir(self, storage_id: Uuid, path: &str) -> PentaractResult<Vec<FSElement>> {
+        self.repo.list_dir(storage_id, path).await
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    ////    Helpers
+    /////////////////////////////////////////////////////////////////////
+
+    fn validate_filepath(path: &str) -> bool {
         Self::validate_path(path) && !path.ends_with(r"/")
     }
 
-    pub fn validate_path(path: &str) -> bool {
+    fn validate_path(path: &str) -> bool {
         !path.starts_with(r"/") && !path.contains(r"//")
     }
 }
