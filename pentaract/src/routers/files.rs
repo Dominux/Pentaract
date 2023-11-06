@@ -4,7 +4,7 @@ use askama::Template;
 use axum::{
     extract::{Multipart, Path, State},
     http::StatusCode,
-    response::{Html, IntoResponse},
+    response::{Html, IntoResponse, Response},
     Extension,
 };
 use uuid::Uuid;
@@ -23,8 +23,24 @@ impl FilesRouter {
     pub async fn index(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
-        Path(storage_id): Path<Uuid>,
+        Path((storage_id, path)): Path<(Uuid, String)>,
     ) -> impl IntoResponse {
+        let (root_path, path) = path.split_once("/").unwrap_or((&path, ""));
+        if root_path != "files" {
+            return (StatusCode::NOT_FOUND, "Not found").into_response();
+        };
+
+        Self::list(state, user, storage_id, path.to_string()).await
+    }
+
+    async fn list(
+        state: Arc<AppState>,
+        user: AuthUser,
+        storage_id: Uuid,
+        path: String,
+    ) -> Response {
+        println!("{path}");
+
         match StoragesService::new(&state.db).get(storage_id, &user).await {
             Err(e) => <(StatusCode, String)>::from(e).into_response(),
             Ok(storage) => Html(
