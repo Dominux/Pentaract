@@ -1,10 +1,10 @@
 use std::{net::SocketAddr, sync::Arc};
 
-use axum::{middleware, Router};
+use axum::Router;
 use tower::limit::ConcurrencyLimitLayer;
 
 use crate::{
-    common::routing::{app_state::AppState, middlewares::auth::logged_in_required},
+    common::routing::app_state::AppState,
     routers::{auth::AuthRouter, storage_workers::StorageWorkersRouter, storages::StoragesRouter},
 };
 
@@ -21,10 +21,6 @@ impl Server {
                 "/storage_workers",
                 StorageWorkersRouter::get_router(app_state.clone()),
             )
-            .route_layer(middleware::from_fn_with_state(
-                app_state.clone(),
-                logged_in_required,
-            ))
             .layer(ConcurrencyLimitLayer::new(workers.into()));
 
         Self { router }
