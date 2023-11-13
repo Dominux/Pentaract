@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::{
     common::{helpers::not_ok, jwt_manager::AuthUser, routing::app_state::AppState},
-    errors::PentaractError,
+    errors::{PentaractError, PentaractResult},
     schemas::files::{InFileSchema, IN_FILE_SCHEMA_FIELDS_AMOUNT},
     services::{files::FilesService, storages::StoragesService},
     templates::{files::upload_form::UploadFormTemplate, storages::id::StorageTemplate},
@@ -31,30 +31,35 @@ impl FilesRouter {
             return (StatusCode::NOT_FOUND, "Not found").into_response();
         };
 
-        Self::list(state, user, storage_id, path).await
-    }
-
-    async fn list(state: Arc<AppState>, user: AuthUser, storage_id: Uuid, path: &str) -> Response {
-        let result = FilesService::new(&state.db, state.tx.clone())
-            .list_dir(storage_id, path)
-            .await;
-
-        match StoragesService::new(&state.db).get(storage_id, &user).await {
+        match Self::list(state, user, storage_id, path).await {
+            Ok(o) => o,
             Err(e) => <(StatusCode, String)>::from(e).into_response(),
-            Ok(storage) => Html(
-                StorageTemplate::new(storage_id, &storage.name)
-                    .render()
-                    .unwrap(),
-            )
-            .into_response(),
         }
     }
 
-    pub async fn get_upload_form(
-        State(state): State<Arc<AppState>>,
-        Extension(user): Extension<AuthUser>,
-        Path(storage_id): Path<Uuid>,
-    ) -> impl IntoResponse {
+    async fn list(
+        state: Arc<AppState>,
+        user: AuthUser,
+        storage_id: Uuid,
+        path: &str,
+    ) -> PentaractResult<Response> {
+        let storage = StoragesService::new(&state.db)
+            .get(storage_id, &user)
+            .await?;
+        let fs_layer = FilesService::new(&state.db, state.tx.clone())
+            .list_dir(storage_id, path)
+            .await?;
+
+        let res = Html(
+            StorageTemplate::new(storage_id, &storage.name, fs_layer)
+                .render()
+                .unwrap(),
+        )
+        .into_response();
+        Ok(res)
+    }
+
+    pub async fn get_upload_form(Path(storage_id): Path<Uuid>) -> impl IntoResponse {
         UploadFormTemplate::new(storage_id, None, None)
             .render()
             .unwrap()

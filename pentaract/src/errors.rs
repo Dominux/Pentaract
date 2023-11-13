@@ -38,6 +38,7 @@ impl From<PentaractError> for (StatusCode, String) {
         match &e {
             PentaractError::AlreadyExists(_) => (StatusCode::CONFLICT, e.to_string()),
             PentaractError::NotAuthenticated => (StatusCode::UNAUTHORIZED, e.to_string()),
+            PentaractError::DoesNotExist(_) => (StatusCode::NOT_FOUND, e.to_string()),
             _ => {
                 tracing::error!("{e}");
                 (

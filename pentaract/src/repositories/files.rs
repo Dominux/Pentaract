@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::errors::{PentaractError, PentaractResult};
 use crate::models::file_chunks::FileChunk;
-use crate::models::files::{FSElement, File, InFile};
+use crate::models::files::{DBFSElement, FSElement, File, InFile};
 
 pub const FILES_TABLE: &str = "files";
 pub const CHUNKS_TABLE: &str = "file_chunks";
@@ -79,23 +79,43 @@ impl<'d> FilesRepository<'d> {
         storage_id: Uuid,
         prefix: &str,
     ) -> PentaractResult<Vec<FSElement>> {
-        let split_position = prefix.matches("/").count();
+        let query = {
+            let adding_to_position = !prefix.is_empty() as usize + 1;
+            let split_position = prefix.matches("/").count() + adding_to_position;
+            let split_part = format!("SPLIT_PART(path, '/', {split_position})");
+            let path_filter = if prefix.is_empty() {
+                ""
+            } else {
+                "AND path LIKE $1 || '/%'"
+            };
 
-        let query = format!(
+            format!(
+                "
+                SELECT DISTINCT {split_part} AS name, $1 || {split_part} = path AS is_file 
+                FROM {FILES_TABLE} 
+                WHERE storage_id = $2 {path_filter} AND is_uploaded;
             "
-            SELECT DISTINCT (
-                SPLIT_PART(path, '/', {split_position}) AS path, 
-                $1 || split_part(path, '/', {split_position}) = path as is_file 
-            ) FROM {FILES_TABLE} 
-            WHERE storage_id = $2 AND path LIKE '$1/%' AND is_uploaded;
-        "
-        );
-        sqlx::query_as(&query)
+            )
+        };
+
+        let fs_layer = sqlx::query_as::<_, DBFSElement>(&query)
             .bind(prefix)
             .bind(storage_id)
             .fetch_all(self.db)
             .await
-            .map_err(|_| PentaractError::Unknown)
+            .map_err(|_| PentaractError::Unknown)?;
+        let fs_layer = fs_layer
+            .into_iter()
+            .map(|el| {
+                let path = format!("{prefix}/{}", el.name);
+                FSElement {
+                    path,
+                    name: el.name,
+                    is_file: el.is_file,
+                }
+            })
+            .collect();
+        Ok(fs_layer)
     }
 
     pub async fn set_as_uploaded(&self, file_id: Uuid) -> PentaractResult<()> {

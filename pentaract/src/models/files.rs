@@ -29,7 +29,14 @@ impl File {
 }
 
 #[derive(Debug, sqlx::FromRow)]
+pub struct DBFSElement {
+    pub name: String,
+    pub is_file: bool,
+}
+
+#[derive(Debug, sqlx::FromRow)]
 pub struct FSElement {
     pub path: String,
+    pub name: String,
     pub is_file: bool,
 }

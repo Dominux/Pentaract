@@ -1,9 +1,11 @@
 <ul class="demo-list-control mdl-list">
-  {% for file in files %}
+  {% for file in fs_layer %}
 
   <li class="mdl-list__item">
-    <span class="mdl-list__item-primary-content">
-      {{ file.name }}
+    <span class="mdl-list__item-primary-content" class="title-link">
+      <a href="/storages/{{ id }}/files/{{ file.path }}">
+        {{ file.name }}
+      </a>
     </span>
     <span class="mdl-list__item-secondary-action">
       <label class="mdl-button mdl-js-button mdl-button--icon">
