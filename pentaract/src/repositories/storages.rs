@@ -81,7 +81,7 @@ impl<'d> StoragesRepository<'d> {
 
     pub async fn get_by_file_id(&self, file_id: Uuid) -> PentaractResult<Storage> {
         sqlx::query_as(
-            format!("SELECT * FROM {TABLE} s JOIN {FILES_TABLE} AS f ON f.storage_id = s.id WHERE f.id = $1").as_str(),
+            format!("SELECT s.* FROM {TABLE} s JOIN {FILES_TABLE} AS f ON f.storage_id = s.id WHERE f.id = $1").as_str(),
         )
         .bind(file_id)
         .fetch_one(self.db)

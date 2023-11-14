@@ -1,7 +1,5 @@
 use serde::Deserialize;
 
-use crate::common::types::ChatId;
-
 #[derive(Deserialize)]
 pub struct UploadBodySchema {
     pub result: UploadResultSchema,

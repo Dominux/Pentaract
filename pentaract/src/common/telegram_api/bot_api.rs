@@ -1,32 +1,38 @@
 use reqwest::multipart;
+use uuid::Uuid;
 
-use crate::{common::types::ChatId, errors::PentaractResult};
+use crate::{
+    common::types::ChatId, errors::PentaractResult,
+    services::storage_workers_scheduler::StorageWorkersScheduler,
+};
 
 use super::schemas::{UploadBodySchema, UploadSchema};
 
 pub struct TelegramBotApi<'t> {
     base_url: &'t str,
-    token: &'t str,
+    scheduler: StorageWorkersScheduler<'t>,
 }
 
 impl<'t> TelegramBotApi<'t> {
-    pub fn new(base_url: &'t str, token: &'t str) -> Self {
-        Self { base_url, token }
+    pub fn new(base_url: &'t str, scheduler: StorageWorkersScheduler<'t>) -> Self {
+        Self {
+            base_url,
+            scheduler,
+        }
     }
 
-    pub async fn upload(&self, file: &[u8], chat_id: ChatId) -> PentaractResult<UploadSchema> {
-        // inserting 100 between minus sign and chat id
-        // cause telegram devs are complete retards and it works this way only
-        //
-        // https://stackoverflow.com/a/65965402/12255756
-        let chat_id = {
-            let n = chat_id.abs().checked_ilog10().unwrap_or(0) + 1;
-            chat_id - (100 * ChatId::from(10).pow(n))
-        };
+    pub async fn upload(
+        &self,
+        file: &[u8],
+        chat_id: ChatId,
+        storage_id: Uuid,
+    ) -> PentaractResult<UploadSchema> {
+        let chat_id = Self::cast_proper_chat_id(chat_id);
 
-        let url = self.build_url("bot", "sendDocument");
+        let token = self.scheduler.get_token(storage_id).await?;
+        let url = self.build_url("bot", "sendDocument", token);
 
-        let file_part = multipart::Part::bytes(file.to_vec()).file_name("who_cares.bin");
+        let file_part = multipart::Part::bytes(file.to_vec()).file_name("pentaract_chunk.bin");
         let form = multipart::Form::new()
             .text("chat_id", chat_id.to_string())
             .part("document", file_part);
@@ -37,22 +43,33 @@ impl<'t> TelegramBotApi<'t> {
             .await?
             .json()
             .await?;
+
+        // https://stackoverflow.com/a/32679930/12255756
         Ok(body.result.document)
     }
 
     pub async fn download(&self, file_id: i64) -> PentaractResult<()> {
         // getting file path
-        let url = self.build_url("bot", "getFile");
+        // let url = self.build_url("bot", "getFile");
 
-        // downloading the file itself
-        let url = self.build_url("file/bot", "");
+        // // downloading the file itself
+        // let url = self.build_url("file/bot", "");
         todo!()
     }
 
-    // https://stackoverflow.com/a/32679930/12255756
+    fn cast_proper_chat_id(chat_id: ChatId) -> ChatId {
+        // inserting 100 between minus sign and chat id
+        // cause telegram devs are complete retards and it works this way only
+        //
+        // https://stackoverflow.com/a/65965402/12255756
 
+        let n = chat_id.abs().checked_ilog10().unwrap_or(0) + 1;
+        chat_id - (100 * ChatId::from(10).pow(n))
+    }
+
+    /// Taking token by a value to force dropping it so it can be used only once
     #[inline]
-    fn build_url(&self, pre: &str, relative: &str) -> String {
-        format!("{}/{pre}{}/{relative}", self.base_url, self.token)
+    fn build_url(&self, pre: &str, relative: &str, token: String) -> String {
+        format!("{}/{pre}{}/{relative}", self.base_url, token)
     }
 }

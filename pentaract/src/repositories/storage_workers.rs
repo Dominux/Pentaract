@@ -3,7 +3,10 @@ use uuid::Uuid;
 
 use crate::common::db::errors::map_not_found;
 use crate::errors::{PentaractError, PentaractResult};
-use crate::models::storage_workers::{InStorageWorker, StorageWorker};
+use crate::models::storage_workers::{InStorageWorker, StorageWorker, StorageWorkerTokenOnly};
+
+const STORAGE_WORKERS_TABLE: &str = "storage_workers";
+const STORAGE_WORKERS_USAGES_TABLE: &str = "storage_workers_usages";
 
 pub struct StorageWorkersRepository<'d> {
     db: &'d PgPool,
@@ -17,12 +20,12 @@ impl<'d> StorageWorkersRepository<'d> {
     pub async fn create(&self, in_obj: InStorageWorker) -> PentaractResult<StorageWorker> {
         let id = Uuid::new_v4();
 
-        sqlx::query(
-            r#"
-                INSERT INTO storage_workers (id, name, token, user_id, storage_id)
-                VALUES ($1, $2, $3, $4, $5);
-            "#,
-        )
+        sqlx::query(&format!(
+            "
+            INSERT INTO {STORAGE_WORKERS_TABLE} (id, name, token, user_id, storage_id)
+            VALUES ($1, $2, $3, $4, $5);
+        "
+        ))
         .bind(id)
         .bind(in_obj.name.clone())
         .bind(in_obj.token.clone())
@@ -54,11 +57,13 @@ impl<'d> StorageWorkersRepository<'d> {
     }
 
     pub async fn list_by_user_id(&self, user_id: Uuid) -> PentaractResult<Vec<StorageWorker>> {
-        sqlx::query_as("SELECT * FROM storage_workers WHERE user_id = $1")
-            .bind(user_id)
-            .fetch_all(self.db)
-            .await
-            .map_err(|_| PentaractError::Unknown)
+        sqlx::query_as(&format!(
+            "SELECT * FROM {STORAGE_WORKERS_TABLE} WHERE user_id = $1"
+        ))
+        .bind(user_id)
+        .fetch_all(self.db)
+        .await
+        .map_err(|_| PentaractError::Unknown)
     }
 
     pub async fn get_by_name_and_user_id(
@@ -66,11 +71,72 @@ impl<'d> StorageWorkersRepository<'d> {
         name: &str,
         user_id: Uuid,
     ) -> PentaractResult<StorageWorker> {
-        sqlx::query_as("SELECT * FROM storage_workers WHERE name = $1 AND user_id = $2")
-            .bind(name)
-            .bind(user_id)
-            .fetch_one(self.db)
+        sqlx::query_as(&format!(
+            "SELECT * FROM {STORAGE_WORKERS_TABLE} WHERE name = $1 AND user_id = $2"
+        ))
+        .bind(name)
+        .bind(user_id)
+        .fetch_one(self.db)
+        .await
+        .map_err(|e| map_not_found(e, "storage_worker"))
+    }
+
+    // https://www.db-fiddle.com/f/fHcCh7bRtVSxyDfPvPyDre/11
+    pub async fn get_token(
+        &self,
+        storage_id: Uuid,
+        limit: u8,
+    ) -> PentaractResult<Option<StorageWorkerTokenOnly>> {
+        let mut transaction = self.db.begin().await.map_err(|e| map_not_found(e, ""))?;
+
+        // deleting old rows
+        sqlx::query(&format!(
+            "
+            DELETE FROM {STORAGE_WORKERS_USAGES_TABLE}
+            WHERE dt < NOW() - INTERVAL '1 minute';
+            "
+        ))
+        .execute(&mut *transaction)
+        .await
+        .map_err(|e| map_not_found(e, "some entity"))?;
+
+        let new_id = Uuid::new_v4();
+
+        // trying to take a token and to register it's usage
+        let token = sqlx::query_as(&format!(
+            "
+            WITH swu AS (
+                INSERT INTO {STORAGE_WORKERS_USAGES_TABLE} (id, storage_worker_id)
+                WITH sw AS (
+                    SELECT sw.id AS storage_worker_id
+                    FROM {STORAGE_WORKERS_TABLE} sw
+                    LEFT JOIN {STORAGE_WORKERS_USAGES_TABLE} swu ON sw.id = swu.storage_worker_id
+                    WHERE sw.storage_id = $1
+                    GROUP BY sw.id
+                    HAVING COUNT(swu.id) < $2
+                    ORDER BY COUNT(swu.id)
+                    LIMIT 1
+                )
+                SELECT $3, storage_worker_id FROM sw
+                RETURNING storage_worker_id
+            )
+            SELECT token
+            FROM swu
+            JOIN {STORAGE_WORKERS_TABLE} sw ON swu.storage_worker_id = sw.id;
+        "
+        ))
+        .bind(storage_id)
+        .bind(limit as i16)
+        .bind(new_id)
+        .fetch_optional(&mut *transaction)
+        .await
+        .map_err(|e| map_not_found(e, "some entity"))?;
+
+        transaction
+            .commit()
             .await
-            .map_err(|e| map_not_found(e, "storage_worker"))
+            .map_err(|e| map_not_found(e, ""))?;
+
+        Ok(token)
     }
 }

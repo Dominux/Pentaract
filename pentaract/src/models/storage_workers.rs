@@ -47,3 +47,8 @@ impl StorageWorker {
         }
     }
 }
+
+#[derive(Debug, sqlx::FromRow)]
+pub struct StorageWorkerTokenOnly {
+    pub token: String,
+}

@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 axum = { version = "0.6.20", features = ["headers", "tracing", "multipart"]}
 tokio = { version = "1.33.0", features = ["full"] }
+futures = "0.3.29"
 tower = { version = "0.4.13", features = ["limit"] }
 tower-http = { version = "0.4.4", features = ["trace"], default_features = false }
 tracing = "0.1.40"

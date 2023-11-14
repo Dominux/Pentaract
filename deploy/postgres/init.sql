@@ -34,3 +34,9 @@ CREATE TABLE file_chunks (
     telegram_file_id VARCHAR(255) NOT NULL,
     position         SmallInt     NOT NULL
 );
+
+CREATE TABLE storage_workers_usages (
+    id                 UUID      PRIMARY KEY,
+    storage_worker_id  UUID      NOT NULL REFERENCES storage_workers,
+    dt                 TIMESTAMP DEFAULT NOW()
+);
