@@ -4,7 +4,10 @@ use uuid::Uuid;
 
 use crate::{
     common::{
-        channels::{ClientMessage, ClientSender, Method, UploadFileData},
+        channels::{
+            ClientData, ClientMessage, ClientSender, DownloadFileData, StorageManagerData,
+            UploadFileData,
+        },
         jwt_manager::AuthUser,
     },
     errors::{PentaractError, PentaractResult},
@@ -26,7 +29,7 @@ impl<'d> FilesService<'d> {
 
     pub async fn upload(&self, in_schema: InFileSchema, user: &AuthUser) -> PentaractResult<()> {
         // 0. path validation
-        if Self::validate_filepath(&in_schema.path) {
+        if !Self::validate_filepath(&in_schema.path) {
             return Err(PentaractError::InvalidPath);
         }
 
@@ -44,7 +47,7 @@ impl<'d> FilesService<'d> {
                 file_data: in_schema.file.as_ref().into(),
             };
             ClientMessage {
-                method: Method::UploadFile(upload_file_data),
+                data: ClientData::UploadFile(upload_file_data),
                 tx: resp_tx,
             }
         };
@@ -53,7 +56,11 @@ impl<'d> FilesService<'d> {
         let _ = self.tx.send(message).await;
 
         // 3. waiting for a storage manager result
-        if let Err(e) = resp_rx.await.unwrap().and({
+        let message_back = match resp_rx.await.unwrap().data {
+            StorageManagerData::UploadFile(r) => r,
+            _ => unimplemented!(),
+        };
+        if let Err(e) = message_back.and({
             tracing::debug!("file loaded successfully");
 
             // 4. setting file as uploaded
@@ -68,6 +75,45 @@ impl<'d> FilesService<'d> {
         };
 
         Ok(())
+    }
+
+    pub async fn download(
+        &self,
+        path: &str,
+        storage_id: Uuid,
+        user: &AuthUser,
+    ) -> PentaractResult<Vec<u8>> {
+        // 0. path validation
+        if !Self::validate_path(path) {
+            return Err(PentaractError::InvalidPath);
+        }
+
+        // 1. getting file by path
+        let file = self.repo.get_file_by_path(path, storage_id).await?;
+
+        // 2. sending task to storage manager
+        let (resp_tx, resp_rx) = oneshot::channel();
+
+        let message = {
+            let download_file_data = DownloadFileData {
+                file_id: file.id,
+                storage_id,
+                user_id: user.id,
+            };
+            ClientMessage {
+                data: ClientData::DownloadFile(download_file_data),
+                tx: resp_tx,
+            }
+        };
+
+        tracing::debug!("sending task to manager");
+        let _ = self.tx.send(message).await;
+
+        // 3. waiting for a storage manager result
+        match resp_rx.await.unwrap().data {
+            StorageManagerData::DownloadFile(r) => r,
+            _ => unimplemented!(),
+        }
     }
 
     pub async fn list_dir(self, storage_id: Uuid, path: &str) -> PentaractResult<Vec<FSElement>> {

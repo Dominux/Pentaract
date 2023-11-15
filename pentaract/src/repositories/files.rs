@@ -1,6 +1,7 @@
 use sqlx::{PgPool, QueryBuilder};
 use uuid::Uuid;
 
+use crate::common::db::errors::map_not_found;
 use crate::errors::{PentaractError, PentaractResult};
 use crate::models::file_chunks::FileChunk;
 use crate::models::files::{DBFSElement, FSElement, File, InFile};
@@ -116,6 +117,25 @@ impl<'d> FilesRepository<'d> {
             })
             .collect();
         Ok(fs_layer)
+    }
+
+    pub async fn get_file_by_path(&self, path: &str, storage_id: Uuid) -> PentaractResult<File> {
+        sqlx::query_as(
+            format!("SELECT * FROM {FILES_TABLE} WHERE storage_id = $1 AND path = $2").as_str(),
+        )
+        .bind(storage_id)
+        .bind(path)
+        .fetch_one(self.db)
+        .await
+        .map_err(|e| map_not_found(e, "file"))
+    }
+
+    pub async fn list_chunks_of_file(&self, file_id: Uuid) -> PentaractResult<Vec<FileChunk>> {
+        sqlx::query_as(format!("SELECT * FROM {CHUNKS_TABLE} WHERE file_id = $1").as_str())
+            .bind(file_id)
+            .fetch_all(self.db)
+            .await
+            .map_err(|e| map_not_found(e, "file chunks"))
     }
 
     pub async fn set_as_uploaded(&self, file_id: Uuid) -> PentaractResult<()> {

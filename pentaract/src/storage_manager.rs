@@ -1,9 +1,11 @@
 use sqlx::PgPool;
 
 use crate::{
-    common::channels::{ClientMessage, Method, StorageManagerListener, UploadFileData},
+    common::channels::{
+        ClientData, ClientMessage, DownloadFileData, StorageManagerData, StorageManagerListener,
+        StorageManagerMessage, UploadFileData,
+    },
     config::Config,
-    errors::PentaractResult,
     services::storage_manager::StorageManagerService,
 };
 
@@ -28,16 +30,28 @@ impl StorageManager {
     }
 
     async fn handle_msg(&self, msg: ClientMessage) {
-        let result = match msg.method {
-            Method::UploadFile(data) => self.upload(data).await,
+        let result = match msg.data {
+            ClientData::UploadFile(data) => self.upload(data).await,
+            ClientData::DownloadFile(data) => self.download(data).await,
         };
+        let msg_back = StorageManagerMessage::new(result);
 
-        let _ = msg.tx.send(result);
+        let _ = msg.tx.send(msg_back);
     }
 
-    async fn upload(&self, data: UploadFileData) -> PentaractResult<()> {
-        StorageManagerService::new(&self.db, &self.config.telegram_api_base_url)
+    async fn upload(&self, data: UploadFileData) -> StorageManagerData {
+        let result = StorageManagerService::new(&self.db, &self.config.telegram_api_base_url)
             .upload(data)
-            .await
+            .await;
+
+        StorageManagerData::UploadFile(result)
+    }
+
+    async fn download(&self, data: DownloadFileData) -> StorageManagerData {
+        let result = StorageManagerService::new(&self.db, &self.config.telegram_api_base_url)
+            .download(data)
+            .await;
+
+        StorageManagerData::DownloadFile(result)
     }
 }

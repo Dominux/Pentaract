@@ -2,11 +2,14 @@ use std::{collections::HashMap, sync::Arc};
 
 use askama::Template;
 use axum::{
+    body::Full,
     extract::{Multipart, Path, State},
     http::StatusCode,
-    response::{Html, IntoResponse, Response},
+    response::{AppendHeaders, Html, IntoResponse, Response},
     Extension,
 };
+use reqwest::header;
+use tokio_util::bytes::Bytes;
 use uuid::Uuid;
 
 use crate::{
@@ -16,6 +19,8 @@ use crate::{
     services::{files::FilesService, storages::StoragesService},
     templates::{files::upload_form::UploadFormTemplate, storages::id::StorageTemplate},
 };
+
+const DOWNLOAD_ENDPOINT: &str = "/download";
 
 pub struct FilesRouter;
 
@@ -31,7 +36,15 @@ impl FilesRouter {
             return (StatusCode::NOT_FOUND, "Not found").into_response();
         };
 
-        match Self::list(state, user, storage_id, path).await {
+        let result = if path.ends_with(DOWNLOAD_ENDPOINT) {
+            let path = &path[..path.len().abs_diff(DOWNLOAD_ENDPOINT.len())];
+            println!("{path}");
+            Self::download(state, user, storage_id, path).await
+        } else {
+            Self::list(state, user, storage_id, path).await
+        };
+
+        match result {
             Ok(o) => o,
             Err(e) => <(StatusCode, String)>::from(e).into_response(),
         }
@@ -124,5 +137,27 @@ impl FilesRouter {
         };
 
         (StatusCode::CREATED).into_response()
+    }
+
+    async fn download(
+        state: Arc<AppState>,
+        user: AuthUser,
+        storage_id: Uuid,
+        path: &str,
+    ) -> PentaractResult<Response> {
+        FilesService::new(&state.db, state.tx.clone())
+            .download(path, storage_id, &user)
+            .await
+            .map(|data| {
+                let bytes = Bytes::from(data);
+                let body = Full::new(bytes);
+
+                let headers = AppendHeaders([
+                    (header::CONTENT_TYPE, "video/mp4"),
+                    (header::CONTENT_DISPOSITION, "attachment"),
+                ]);
+
+                (headers, body).into_response()
+            })
     }
 }

@@ -3,10 +3,15 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
-    common::{channels::UploadFileData, telegram_api::bot_api::TelegramBotApi, types::ChatId},
+    common::{
+        channels::{DownloadFileData, UploadFileData},
+        telegram_api::bot_api::TelegramBotApi,
+        types::ChatId,
+    },
     errors::PentaractResult,
     models::file_chunks::FileChunk,
     repositories::{files::FilesRepository, storages::StoragesRepository},
+    schemas::files::DownloadedChunkSchema,
 };
 
 use super::storage_workers_scheduler::StorageWorkersScheduler;
@@ -56,7 +61,6 @@ impl<'d> StorageManagerService<'d> {
         let chunks = join_all(futures_)
             .await
             .into_iter()
-            .map(|fut| fut)
             .collect::<PentaractResult<Vec<_>>>()?;
 
         // 4. saving chunks to db
@@ -78,7 +82,49 @@ impl<'d> StorageManagerService<'d> {
             .upload(bytes_chunk, chat_id, storage_id)
             .await?;
 
-        let chunk = FileChunk::new(Uuid::new_v4(), file_id, document.file_id, position as i32);
+        let chunk = FileChunk::new(Uuid::new_v4(), file_id, document.file_id, position as i16);
         Ok(chunk)
+    }
+
+    pub async fn download(&self, data: DownloadFileData) -> PentaractResult<Vec<u8>> {
+        // 1. getting chunks
+        let chunks = self.files_repo.list_chunks_of_file(data.file_id).await?;
+
+        // 2. downloading by chunks
+        let futures_: Vec<_> = chunks
+            .into_iter()
+            .map(|chunk| self.download_chunk(data.storage_id, chunk))
+            .collect();
+        let mut chunks = join_all(futures_)
+            .await
+            .into_iter()
+            .collect::<PentaractResult<Vec<_>>>()?;
+
+        // 3. sorting in a right positions and merging into single bytes slice
+        chunks.sort_by_key(|chunk| chunk.position);
+        let file = chunks.into_iter().flat_map(|chunk| chunk.data).collect();
+        Ok(file)
+    }
+
+    async fn download_chunk(
+        &self,
+        storage_id: Uuid,
+        chunk: FileChunk,
+    ) -> PentaractResult<DownloadedChunkSchema> {
+        // TODO: take rate limit from envs
+        let scheduler = StorageWorkersScheduler::new(self.db, 10);
+
+        let file = TelegramBotApi::new(self.telegram_baseurl, scheduler)
+            .download(&chunk.telegram_file_id, storage_id)
+            .await
+            .map(|data| DownloadedChunkSchema::new(chunk.position, data))?;
+
+        tracing::debug!(
+            "[TELEGRAM API] downloaded file with file_id \"{}\" and position \"{}\"",
+            chunk.file_id,
+            chunk.position
+        );
+
+        Ok(file)
     }
 }

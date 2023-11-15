@@ -15,4 +15,12 @@ pub struct UploadSchema {
     pub file_id: String,
 }
 
-pub struct DownloadSchema {}
+#[derive(Deserialize)]
+pub struct DownloadBodySchema {
+    pub result: DownloadSchema,
+}
+
+#[derive(Deserialize)]
+pub struct DownloadSchema {
+    pub file_path: String,
+}

@@ -27,7 +27,7 @@ impl Server {
     }
 
     pub async fn run(self, addr: &SocketAddr) {
-        tracing::debug!("listening on http://{addr}");
+        tracing::info!("listening on http://{addr}");
         axum::Server::bind(addr)
             .serve(self.router.into_make_service())
             .await
