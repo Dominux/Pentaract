@@ -34,7 +34,7 @@ impl<'d> FilesService<'d> {
         }
 
         // 1. saving file in db
-        let in_file = InFile::new(in_schema.path, in_schema.storage_id);
+        let in_file = InFile::new(in_schema.path, in_schema.size, in_schema.storage_id);
         let file = self.repo.create_file(in_file).await?;
 
         // 2. sending file to storage manager
@@ -60,7 +60,7 @@ impl<'d> FilesService<'d> {
             StorageManagerData::UploadFile(r) => r,
             _ => unimplemented!(),
         };
-        if let Err(e) = message_back.and({
+        if let Err(e) = message_back.or({
             tracing::debug!("file loaded successfully");
 
             // 4. setting file as uploaded

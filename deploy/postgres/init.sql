@@ -20,10 +20,11 @@ CREATE TABLE storage_workers (
 );
 
 CREATE TABLE files (
-    id          UUID    PRIMARY KEY,
-    path        VARCHAR NOT NULL,
-    storage_id  UUID    NOT NULL REFERENCES storages,
-    is_uploaded bool    NOT NULL,
+    id          UUID         PRIMARY KEY,
+    path        VARCHAR      NOT NULL,
+    size        BigInt       NOT NULL,
+    storage_id  UUID         NOT NULL REFERENCES storages,
+    is_uploaded bool         NOT NULL,
 
     UNIQUE (path, storage_id)
 );

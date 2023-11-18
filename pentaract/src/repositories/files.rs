@@ -25,14 +25,15 @@ impl<'d> FilesRepository<'d> {
         sqlx::query(
             format!(
                 "
-                INSERT INTO {FILES_TABLE} (id, path, storage_id, is_uploaded)
-                VALUES ($1, $2, $3, false);
+                INSERT INTO {FILES_TABLE} (id, path, size, storage_id, is_uploaded)
+                VALUES ($1, $2, $3, $4, false);
             "
             )
             .as_str(),
         )
         .bind(id)
-        .bind(in_obj.path.clone())
+        .bind(&in_obj.path)
+        .bind(in_obj.size)
         .bind(in_obj.storage_id)
         .execute(self.db)
         .await
@@ -49,7 +50,7 @@ impl<'d> FilesRepository<'d> {
             }
         })?;
 
-        let storage = File::new(id, in_obj.path, in_obj.storage_id, false);
+        let storage = File::new(id, in_obj.path, in_obj.size, in_obj.storage_id, false);
         Ok(storage)
     }
 
@@ -105,10 +106,15 @@ impl<'d> FilesRepository<'d> {
             .fetch_all(self.db)
             .await
             .map_err(|_| PentaractError::Unknown)?;
+        let prefix = if prefix.is_empty() {
+            prefix.to_string()
+        } else {
+            format!("{prefix}/")
+        };
         let fs_layer = fs_layer
             .into_iter()
             .map(|el| {
-                let path = format!("{prefix}/{}", el.name);
+                let path = format!("{prefix}{}", el.name);
                 FSElement {
                     path,
                     name: el.name,

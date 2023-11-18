@@ -76,11 +76,17 @@ impl<'d> StorageManagerService<'d> {
         bytes_chunk: &[u8],
     ) -> PentaractResult<FileChunk> {
         // TODO: take rate limit from envs
-        let scheduler = StorageWorkersScheduler::new(self.db, 10);
+        let scheduler = StorageWorkersScheduler::new(self.db, 15);
 
         let document = TelegramBotApi::new(self.telegram_baseurl, scheduler)
             .upload(bytes_chunk, chat_id, storage_id)
             .await?;
+
+        tracing::debug!(
+            "[TELEGRAM API] uploaded chunk with file_id \"{}\" and position \"{}\"",
+            document.file_id,
+            position
+        );
 
         let chunk = FileChunk::new(Uuid::new_v4(), file_id, document.file_id, position as i16);
         Ok(chunk)
@@ -112,7 +118,7 @@ impl<'d> StorageManagerService<'d> {
         chunk: FileChunk,
     ) -> PentaractResult<DownloadedChunkSchema> {
         // TODO: take rate limit from envs
-        let scheduler = StorageWorkersScheduler::new(self.db, 10);
+        let scheduler = StorageWorkersScheduler::new(self.db, 15);
 
         let file = TelegramBotApi::new(self.telegram_baseurl, scheduler)
             .download(&chunk.telegram_file_id, storage_id)
@@ -120,7 +126,7 @@ impl<'d> StorageManagerService<'d> {
             .map(|data| DownloadedChunkSchema::new(chunk.position, data))?;
 
         tracing::debug!(
-            "[TELEGRAM API] downloaded file with file_id \"{}\" and position \"{}\"",
+            "[TELEGRAM API] downloaded chunk with file_id \"{}\" and position \"{}\"",
             chunk.file_id,
             chunk.position
         );

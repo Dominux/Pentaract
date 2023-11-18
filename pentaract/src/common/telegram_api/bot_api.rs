@@ -44,16 +44,18 @@ impl<'t> TelegramBotApi<'t> {
         let form = multipart::Form::new()
             .text("chat_id", chat_id.to_string())
             .part("document", file_part);
-        let body: UploadBodySchema = reqwest::Client::new()
+
+        let response = reqwest::Client::new()
             .post(url)
             .multipart(form)
             .send()
-            .await?
-            .json()
             .await?;
 
-        // https://stackoverflow.com/a/32679930/12255756
-        Ok(body.result.document)
+        match response.error_for_status() {
+            // https://stackoverflow.com/a/32679930/12255756
+            Ok(r) => Ok(r.json::<UploadBodySchema>().await?.result.document),
+            Err(e) => Err(e.into()),
+        }
     }
 
     pub async fn download(

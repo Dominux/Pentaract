@@ -1,9 +1,9 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, path::Path, sync::Arc};
 
 use askama::Template;
 use axum::{
     body::Full,
-    extract::{Multipart, Path, State},
+    extract::{Multipart, Path as RoutePath, State},
     http::StatusCode,
     response::{AppendHeaders, Html, IntoResponse, Response},
     Extension,
@@ -28,7 +28,7 @@ impl FilesRouter {
     pub async fn index(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
-        Path((storage_id, path)): Path<(Uuid, String)>,
+        RoutePath((storage_id, path)): RoutePath<(Uuid, String)>,
     ) -> impl IntoResponse {
         // dynamic path resolution
         let (root_path, path) = path.split_once("/").unwrap_or((&path, ""));
@@ -72,7 +72,7 @@ impl FilesRouter {
         Ok(res)
     }
 
-    pub async fn get_upload_form(Path(storage_id): Path<Uuid>) -> impl IntoResponse {
+    pub async fn get_upload_form(RoutePath(storage_id): RoutePath<Uuid>) -> impl IntoResponse {
         UploadFormTemplate::new(storage_id, None, None)
             .render()
             .unwrap()
@@ -81,7 +81,7 @@ impl FilesRouter {
     pub async fn upload(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
-        Path(storage_id): Path<Uuid>,
+        RoutePath(storage_id): RoutePath<Uuid>,
         mut multipart: Multipart,
     ) -> impl IntoResponse {
         // parsing and validating schema
@@ -111,11 +111,7 @@ impl FilesRouter {
             }
 
             // now we have ensured that values are cleared
-            InFileSchema {
-                storage_id,
-                file: file.unwrap().clone(),
-                path: path.unwrap(),
-            }
+            InFileSchema::new(storage_id, path.unwrap(), file.unwrap().clone())
         };
 
         // do all other stuff
@@ -149,12 +145,22 @@ impl FilesRouter {
             .download(path, storage_id, &user)
             .await
             .map(|data| {
+                let filename = Path::new(path)
+                    .file_name()
+                    .map(|name| name.to_str().unwrap_or_default())
+                    .unwrap_or("unnamed.bin");
+                let content_type = mime_guess::from_path(filename)
+                    .first_or_octet_stream()
+                    .to_string();
                 let bytes = Bytes::from(data);
                 let body = Full::new(bytes);
 
                 let headers = AppendHeaders([
-                    (header::CONTENT_TYPE, "video/mp4"),
-                    (header::CONTENT_DISPOSITION, "attachment"),
+                    (header::CONTENT_TYPE, content_type),
+                    (
+                        header::CONTENT_DISPOSITION,
+                        format!("attachment; filename=\"{filename}\""),
+                    ),
                 ]);
 
                 (headers, body).into_response()
