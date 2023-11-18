@@ -88,7 +88,7 @@ impl<'d> FilesRepository<'d> {
             let path_filter = if prefix.is_empty() {
                 ""
             } else {
-                "AND path LIKE $1 || '/%'"
+                "AND path LIKE $1 || '%'"
             };
 
             format!(
@@ -100,17 +100,18 @@ impl<'d> FilesRepository<'d> {
             )
         };
 
-        let fs_layer = sqlx::query_as::<_, DBFSElement>(&query)
-            .bind(prefix)
-            .bind(storage_id)
-            .fetch_all(self.db)
-            .await
-            .map_err(|_| PentaractError::Unknown)?;
         let prefix = if prefix.is_empty() {
             prefix.to_string()
         } else {
             format!("{prefix}/")
         };
+
+        let fs_layer = sqlx::query_as::<_, DBFSElement>(&query)
+            .bind(&prefix)
+            .bind(storage_id)
+            .fetch_all(self.db)
+            .await
+            .map_err(|_| PentaractError::Unknown)?;
         let fs_layer = fs_layer
             .into_iter()
             .map(|el| {
@@ -122,6 +123,7 @@ impl<'d> FilesRepository<'d> {
                 }
             })
             .collect();
+
         Ok(fs_layer)
     }
 

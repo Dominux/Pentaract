@@ -2,18 +2,21 @@
   {% for file in fs_layer %}
 
   <li class="mdl-list__item">
-    <span class="mdl-list__item-primary-content" class="title-link">
-      <a href="/storages/{{ id }}/files/{{ file.path }}">
+    <a href="/storages/{{ id }}/files/{{ file.path }}" class="title-link">
+      <span class="mdl-list__item-primary-content">
+        <label class="mdl-button mdl-button--icon">
+          <i class="material-icons mdl-list__item-icon">
+            {% if file.is_file %}
+            description
+            {% else %}
+            folder_open
+            {% endif %}
+          </i>
+        </label>
+
         {{ file.name }}
-      </a>
-    </span>
-    <span class="mdl-list__item-secondary-action">
-      <label class="mdl-button mdl-js-button mdl-button--icon">
-        <a href="/auth/logout" class="title-link">
-          <i class="material-icons">delete</i>
-        </a>
-      </label>
-    </span>
+      </span>
+    </a>
   </li>
 
   {% endfor %}

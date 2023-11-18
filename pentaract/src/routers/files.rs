@@ -15,6 +15,7 @@ use uuid::Uuid;
 use crate::{
     common::{helpers::not_ok, jwt_manager::AuthUser, routing::app_state::AppState},
     errors::{PentaractError, PentaractResult},
+    models::files::FSElement,
     schemas::files::{InFileSchema, IN_FILE_SCHEMA_FIELDS_AMOUNT},
     services::{files::FilesService, storages::StoragesService},
     templates::{files::upload_form::UploadFormTemplate, storages::id::StorageTemplate},
@@ -59,9 +60,31 @@ impl FilesRouter {
         let storage = StoragesService::new(&state.db)
             .get(storage_id, &user)
             .await?;
-        let fs_layer = FilesService::new(&state.db, state.tx.clone())
-            .list_dir(storage_id, path)
-            .await?;
+        let fs_layer = {
+            let mut fs_layer = FilesService::new(&state.db, state.tx.clone())
+                .list_dir(storage_id, path)
+                .await?;
+
+            // inserting `back` option into UX
+            if !path.is_empty() {
+                let path = Path::new(path)
+                    .parent()
+                    .unwrap_or(Path::new(""))
+                    .to_str()
+                    .unwrap();
+
+                fs_layer.insert(
+                    0,
+                    FSElement {
+                        path: path.to_string(),
+                        name: "..".to_string(),
+                        is_file: false,
+                    },
+                );
+            }
+
+            fs_layer
+        };
 
         let res = Html(
             StorageTemplate::new(storage_id, &storage.name, fs_layer)
