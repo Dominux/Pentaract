@@ -3,7 +3,7 @@ use askama::Template;
 use crate::models::storages::Storage;
 
 #[derive(Template)]
-#[template(path = "storage_workers/create_form.html")]
+#[template(path = "storage_workers/create_form.jinja")]
 pub struct StorageWorkersCreateFormTemplate<'a> {
     name_err: Option<&'a str>,
     token_err: Option<&'a str>,

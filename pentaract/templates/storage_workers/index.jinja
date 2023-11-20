@@ -1,4 +1,4 @@
-{% extends "logged_in_base.html" %}
+{% extends "logged_in_base.jinja" %}
 
 {% block title %}Storage workers{% endblock %}
 
@@ -20,6 +20,6 @@
 
 {% block content %}
 
-{% include "storage_workers/list.html" %}
+{% include "storage_workers/list.jinja" %}
 
 {% endblock %}

@@ -3,7 +3,7 @@ use askama::Template;
 use crate::models::storages::Storage;
 
 #[derive(Template)]
-#[template(path = "storages/index.html")]
+#[template(path = "storages/index.jinja")]
 pub struct StoragesIndexTemplate {
     storages: Vec<Storage>,
 }
@@ -15,7 +15,7 @@ impl StoragesIndexTemplate {
 }
 
 #[derive(Template)]
-#[template(path = "storages/list.html")]
+#[template(path = "storages/list.jinja")]
 pub struct StoragesListTemplate {
     storages: Vec<Storage>,
 }

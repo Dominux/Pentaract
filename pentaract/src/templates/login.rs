@@ -1,7 +1,7 @@
 use askama::Template;
 
 #[derive(Template)]
-#[template(path = "login.html")]
+#[template(path = "login.jinja")]
 pub struct LoginTemplate<'a> {
     error: Option<&'a str>,
 }

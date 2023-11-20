@@ -2,7 +2,7 @@ use askama::Template;
 use uuid::Uuid;
 
 #[derive(Template)]
-#[template(path = "files/upload_form.html")]
+#[template(path = "files/upload_form.jinja")]
 pub struct UploadFormTemplate<'a> {
     pub storage_id: Uuid,
     pub path_err: Option<&'a str>,

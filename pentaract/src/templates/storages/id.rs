@@ -3,7 +3,7 @@ use askama::Template;
 use crate::models::files::FSElement;
 
 #[derive(Template)]
-#[template(path = "storages/id.html")]
+#[template(path = "storages/id.jinja")]
 pub struct StorageTemplate<'a> {
     id: uuid::Uuid,
     name: &'a str,

@@ -1,7 +1,7 @@
 use askama::Template;
 
 #[derive(Template)]
-#[template(path = "storages/create_form.html")]
+#[template(path = "storages/create_form.jinja")]
 pub struct StoragesCreateFormTemplate<'a> {
     name_err: Option<&'a str>,
 }

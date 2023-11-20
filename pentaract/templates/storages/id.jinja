@@ -1,4 +1,4 @@
-{% extends "logged_in_base.html" %}
+{% extends "logged_in_base.jinja" %}
 
 {% block title %}Storage {{ name }}{% endblock %}
 
@@ -23,6 +23,6 @@
   </button>
 </div>
 
-{% include "files/list.html" %}
+{% include "files/list.jinja" %}
 
 {% endblock %}

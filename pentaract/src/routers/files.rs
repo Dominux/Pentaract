@@ -39,7 +39,6 @@ impl FilesRouter {
 
         let result = if path.ends_with(DOWNLOAD_ENDPOINT) {
             let path = &path[..path.len().abs_diff(DOWNLOAD_ENDPOINT.len())];
-            println!("{path}");
             Self::download(state, user, storage_id, path).await
         } else {
             Self::list(state, user, storage_id, path).await
