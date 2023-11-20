@@ -1,10 +1,5 @@
 <div id="storage">
-  <div>
-    <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
-      hx-get="/storages/{{ id }}/upload_form" hx-trigger="click" hx-target="#storage" hx-swap="outerHTML transition:true">
-      Upload
-    </button>
-  </div>
+  {% include "files/upload_button.jinja" %}
 
   <ul class="list-control mdl-list">
     {% for file in fs_layer %}
@@ -43,7 +38,7 @@
             <li disabled class="mdl-menu__item mdl-menu__item--full-bleed-divider">Download</li>
           {% endif %}
 
-          <li class="mdl-menu__item" color="red">Delete</li>
+          <li class="mdl-menu__item">Delete</li>
         </ul>
       {% endif %}
     </li>

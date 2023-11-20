@@ -1,7 +1,13 @@
 use axum::body::Bytes;
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::common::types::Position;
+
+#[derive(Deserialize)]
+pub struct UploadParams {
+    pub path: String,
+}
 
 pub struct InFileSchema {
     pub storage_id: Uuid,

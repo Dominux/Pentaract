@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::Path, sync::Arc};
 use askama::Template;
 use axum::{
     body::Full,
-    extract::{Multipart, Path as RoutePath, State},
+    extract::{Multipart, Path as RoutePath, Query, State},
     http::StatusCode,
     response::{AppendHeaders, Html, IntoResponse, Response},
     Extension,
@@ -15,10 +15,16 @@ use uuid::Uuid;
 use crate::{
     common::{helpers::not_ok, jwt_manager::AuthUser, routing::app_state::AppState},
     errors::{PentaractError, PentaractResult},
-    models::files::FSElement,
-    schemas::files::{InFileSchema, IN_FILE_SCHEMA_FIELDS_AMOUNT},
+    models::{
+        files::{FSElement, InFile},
+        storages::Storage,
+    },
+    schemas::files::{InFileSchema, UploadParams, IN_FILE_SCHEMA_FIELDS_AMOUNT},
     services::{files::FilesService, storages::StoragesService},
-    templates::{files::upload_form::UploadFormTemplate, storages::id::StorageTemplate},
+    templates::{
+        files::{list::FilesListTemplate, upload_to_form::UploadToFormTemplate},
+        storages::id::StorageTemplate,
+    },
 };
 
 const DOWNLOAD_ENDPOINT: &str = "/download";
@@ -56,6 +62,23 @@ impl FilesRouter {
         storage_id: Uuid,
         path: &str,
     ) -> PentaractResult<Response> {
+        let (storage, fs_layer) = Self::_list(state, user, storage_id, path).await?;
+
+        let res = Html(
+            StorageTemplate::new(storage_id, path, &storage.name, fs_layer)
+                .render()
+                .unwrap(),
+        )
+        .into_response();
+        Ok(res)
+    }
+
+    async fn _list(
+        state: Arc<AppState>,
+        user: AuthUser,
+        storage_id: Uuid,
+        path: &str,
+    ) -> PentaractResult<(Storage, Vec<FSElement>)> {
         let storage = StoragesService::new(&state.db)
             .get(storage_id, &user)
             .await?;
@@ -85,22 +108,52 @@ impl FilesRouter {
             fs_layer
         };
 
-        let res = Html(
-            StorageTemplate::new(storage_id, &storage.name, fs_layer)
-                .render()
-                .unwrap(),
-        )
-        .into_response();
-        Ok(res)
+        Ok((storage, fs_layer))
     }
 
-    pub async fn get_upload_form(RoutePath(storage_id): RoutePath<Uuid>) -> impl IntoResponse {
-        UploadFormTemplate::new(storage_id, None, None)
+    pub async fn get_upload_to_form(RoutePath(storage_id): RoutePath<Uuid>) -> impl IntoResponse {
+        UploadToFormTemplate::new(storage_id, None, None)
             .render()
             .unwrap()
     }
 
     pub async fn upload(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+        Query(params): Query<UploadParams>,
+        RoutePath(storage_id): RoutePath<Uuid>,
+        mut multipart: Multipart,
+    ) -> impl IntoResponse {
+        // parsing
+        let (filename, file) = match multipart.next_field().await.unwrap() {
+            Some(field) => (
+                field.file_name().unwrap_or("unnamed").to_owned(),
+                field.bytes().await.unwrap(),
+            ),
+            None => {
+                return (StatusCode::BAD_REQUEST, "file field is not presented").into_response()
+            }
+        };
+        let path = Path::new(&params.path)
+            .with_file_name(filename)
+            .to_str()
+            .unwrap()
+            .to_string();
+        let size = file.len() as i64;
+        let in_file = InFile::new(path, size, storage_id);
+
+        // do all other stuff
+        if let Err(e) = FilesService::new(&state.db, state.tx.clone())
+            .upload(in_file, file, &user)
+            .await
+        {
+            todo!()
+        };
+
+        Self::get_upload_result(state, user, storage_id, &params.path).await
+    }
+
+    pub async fn upload_to(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
         RoutePath(storage_id): RoutePath<Uuid>,
@@ -128,23 +181,24 @@ impl FilesRouter {
             if path.is_err() || file.is_err() {
                 // returning form with errors
                 let form_with_errors =
-                    UploadFormTemplate::new(storage_id, not_ok(path), not_ok(file));
+                    UploadToFormTemplate::new(storage_id, not_ok(path), not_ok(file));
                 return Html(form_with_errors.render().unwrap()).into_response();
             }
 
             // now we have ensured that values are cleared
             InFileSchema::new(storage_id, path.unwrap(), file.unwrap().clone())
         };
+        let path = in_schema.path.clone();
 
         // do all other stuff
         if let Err(e) = FilesService::new(&state.db, state.tx.clone())
-            .upload(in_schema, &user)
+            .upload_to(in_schema, &user)
             .await
         {
             return match e {
                 PentaractError::AlreadyExists(_) | PentaractError::InvalidPath => {
                     return Html(
-                        UploadFormTemplate::new(storage_id, Some(&e.to_string()), None)
+                        UploadToFormTemplate::new(storage_id, Some(&e.to_string()), None)
                             .render()
                             .unwrap(),
                     )
@@ -154,7 +208,26 @@ impl FilesRouter {
             };
         };
 
-        (StatusCode::CREATED).into_response()
+        Self::get_upload_result(state, user, storage_id, &path).await
+    }
+
+    #[inline]
+    async fn get_upload_result(
+        state: Arc<AppState>,
+        user: AuthUser,
+        storage_id: Uuid,
+        path: &str,
+    ) -> Response {
+        let list = Self::_list(state, user, storage_id, path).await;
+        match list {
+            Ok((storage, fs_layer)) => Html(
+                FilesListTemplate::new(storage.id, path, fs_layer)
+                    .render()
+                    .unwrap(),
+            )
+            .into_response(),
+            Err(e) => <(StatusCode, String)>::from(e).into_response(),
+        }
     }
 
     async fn download(

@@ -34,11 +34,12 @@ impl StoragesRouter {
             .route("/", get(Self::index).post(Self::create))
             .route("/list", get(Self::list))
             .route("/create", get(Self::get_create_form))
+            .route("/:storage_id/upload", post(FilesRouter::upload))
             .route(
                 "/:storage_id/upload_form",
-                get(FilesRouter::get_upload_form),
+                get(FilesRouter::get_upload_to_form),
             )
-            .route("/:storage_id/upload", post(FilesRouter::upload))
+            .route("/:storage_id/upload_to", post(FilesRouter::upload_to))
             .route("/:storage_id/*path", get(FilesRouter::index))
             .layer(DefaultBodyLimit::disable())
             .route_layer(middleware::from_fn_with_state(

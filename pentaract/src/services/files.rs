@@ -1,3 +1,4 @@
+use axum::body::Bytes;
 use sqlx::PgPool;
 use tokio::sync::oneshot;
 use uuid::Uuid;
@@ -27,14 +28,23 @@ impl<'d> FilesService<'d> {
         Self { repo, tx }
     }
 
-    pub async fn upload(&self, in_schema: InFileSchema, user: &AuthUser) -> PentaractResult<()> {
+    pub async fn upload_to(&self, in_schema: InFileSchema, user: &AuthUser) -> PentaractResult<()> {
         // 0. path validation
         if !Self::validate_filepath(&in_schema.path) {
             return Err(PentaractError::InvalidPath);
         }
 
-        // 1. saving file in db
         let in_file = InFile::new(in_schema.path, in_schema.size, in_schema.storage_id);
+        self.upload(in_file, in_schema.file, user).await
+    }
+
+    pub async fn upload(
+        &self,
+        in_file: InFile,
+        file_data: Bytes,
+        user: &AuthUser,
+    ) -> PentaractResult<()> {
+        // 1. saving file in db
         let file = self.repo.create_file(in_file).await?;
 
         // 2. sending file to storage manager
@@ -44,7 +54,7 @@ impl<'d> FilesService<'d> {
             let upload_file_data = UploadFileData {
                 file_id: file.id,
                 user_id: user.id,
-                file_data: in_schema.file.as_ref().into(),
+                file_data: file_data.as_ref().into(),
             };
             ClientMessage {
                 data: ClientData::UploadFile(upload_file_data),

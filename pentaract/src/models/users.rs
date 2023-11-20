@@ -1,7 +1,7 @@
-pub struct InUser {
-    pub username: String,
-    pub password: String,
-}
+// pub struct InUser {
+//     pub username: String,
+//     pub password: String,
+// }
 
 pub struct InDBUser {
     pub username: String,

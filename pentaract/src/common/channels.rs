@@ -51,7 +51,7 @@ pub enum StorageManagerData {
 ///     Channels
 //////////////////////////////////////
 
-pub type ClientListener = oneshot::Receiver<StorageManagerMessage>;
+// pub type ClientListener = oneshot::Receiver<StorageManagerMessage>;
 pub type StorageManagerSender = oneshot::Sender<StorageManagerMessage>;
 pub type ClientSender = mpsc::Sender<ClientMessage>;
 pub type StorageManagerListener = mpsc::Receiver<ClientMessage>;
