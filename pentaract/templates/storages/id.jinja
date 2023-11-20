@@ -4,24 +4,18 @@
 
 {% block head %}
 <style>
-  .demo-list-control {
-    width: 300px;
+  .list-control {
+    width: 360px;
+    max-width: 90vw;
   }
 
-  .demo-list-radio {
+  .list-radio {
     display: inline;
   }
 </style>
 {% endblock %}
 
 {% block content %}
-
-<div id="storage">
-  <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored"
-    hx-get="/storages/{{ id }}/upload_form" hx-trigger="click" hx-target="#storage" hx-swap="outerHTML transition:true">
-    Upload
-  </button>
-</div>
 
 {% include "files/list.jinja" %}
 
