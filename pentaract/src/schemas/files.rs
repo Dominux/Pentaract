@@ -30,6 +30,22 @@ impl InFileSchema {
 
 pub const IN_FILE_SCHEMA_FIELDS_AMOUNT: usize = 2;
 
+pub struct InFolderSchema {
+    pub storage_id: Uuid,
+    pub parent_path: String,
+    pub folder_name: String,
+}
+
+impl InFolderSchema {
+    pub fn new(storage_id: Uuid, parent_path: String, folder_name: String) -> Self {
+        Self {
+            storage_id,
+            parent_path,
+            folder_name,
+        }
+    }
+}
+
 pub struct DownloadedChunkSchema {
     pub position: Position,
     pub data: Vec<u8>,

@@ -3,9 +3,20 @@
 {# TODO: expand width of items so they will react on click #}
 <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect" for="menu-create">
   <li class="mdl-menu__item">
+    <span
+      hx-post="/storages/{{ id }}/create_folder?path={{ path }}"
+      hx-prompt="New folder"
+      hx-target="#storage"
+      hx-swap="outerHTML transition:true"
+    >
+      Create folder
+    </span>
+  </li>
+
+  <li class="mdl-menu__item">
     <form 
-      hx-encoding="multipart/form-data"
       hx-post="/storages/{{ id }}/upload?path={{ path }}"
+      hx-encoding="multipart/form-data"
       hx-trigger="change from:#upload-file-button"
       hx-target="#storage"
       hx-swap="outerHTML transition:true"

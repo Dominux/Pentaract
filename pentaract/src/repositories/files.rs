@@ -20,13 +20,21 @@ impl<'d> FilesRepository<'d> {
     }
 
     pub async fn create_file(&self, in_obj: InFile) -> PentaractResult<File> {
+        self._create_file(in_obj, false).await
+    }
+
+    pub async fn create_folder(&self, in_obj: InFile) -> PentaractResult<File> {
+        self._create_file(in_obj, true).await
+    }
+
+    async fn _create_file(&self, in_obj: InFile, is_uploaded: bool) -> PentaractResult<File> {
         let id = Uuid::new_v4();
 
         sqlx::query(
             format!(
                 "
                 INSERT INTO {FILES_TABLE} (id, path, size, storage_id, is_uploaded)
-                VALUES ($1, $2, $3, $4, false);
+                VALUES ($1, $2, $3, $4, $5);
             "
             )
             .as_str(),
@@ -35,6 +43,7 @@ impl<'d> FilesRepository<'d> {
         .bind(&in_obj.path)
         .bind(in_obj.size)
         .bind(in_obj.storage_id)
+        .bind(is_uploaded)
         .execute(self.db)
         .await
         .map_err(|e| match e {
@@ -95,7 +104,7 @@ impl<'d> FilesRepository<'d> {
                 "
                 SELECT DISTINCT {split_part} AS name, $1 || {split_part} = path AS is_file 
                 FROM {FILES_TABLE} 
-                WHERE storage_id = $2 {path_filter} AND is_uploaded;
+                WHERE storage_id = $2 {path_filter} AND is_uploaded AND {split_part} <> '';
             "
             )
         };

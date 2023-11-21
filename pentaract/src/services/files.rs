@@ -14,7 +14,7 @@ use crate::{
     errors::{PentaractError, PentaractResult},
     models::files::{FSElement, InFile},
     repositories::files::FilesRepository,
-    schemas::files::InFileSchema,
+    schemas::files::{InFileSchema, InFolderSchema},
 };
 
 pub struct FilesService<'d> {
@@ -26,6 +26,27 @@ impl<'d> FilesService<'d> {
     pub fn new(db: &'d PgPool, tx: ClientSender) -> Self {
         let repo = FilesRepository::new(db);
         Self { repo, tx }
+    }
+
+    pub async fn create_folder(
+        &self,
+        in_schema: InFolderSchema,
+        _user: &AuthUser,
+    ) -> PentaractResult<()> {
+        // 0. validation
+        if !Self::validate_filepath(&in_schema.parent_path) {
+            return Err(PentaractError::InvalidPath);
+        }
+        if in_schema.folder_name.contains(r"/") {
+            return Err(PentaractError::InvalidFolderName);
+        }
+
+        // 1. constructing final values
+        let path = format!("{}/{}/", in_schema.parent_path, in_schema.folder_name);
+        let in_file = InFile::new(path, 0, in_schema.storage_id);
+
+        // 2. saving to db
+        self.repo.create_folder(in_file).await.map(|_| ())
     }
 
     pub async fn upload_to(&self, in_schema: InFileSchema, user: &AuthUser) -> PentaractResult<()> {

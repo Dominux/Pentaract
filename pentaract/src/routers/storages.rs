@@ -34,6 +34,10 @@ impl StoragesRouter {
             .route("/", get(Self::index).post(Self::create))
             .route("/list", get(Self::list))
             .route("/create", get(Self::get_create_form))
+            .route(
+                "/:storage_id/create_folder",
+                post(FilesRouter::create_folder),
+            )
             .route("/:storage_id/upload", post(FilesRouter::upload))
             .route(
                 "/:storage_id/upload_form",

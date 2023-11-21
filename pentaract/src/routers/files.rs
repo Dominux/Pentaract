@@ -4,7 +4,7 @@ use askama::Template;
 use axum::{
     body::Full,
     extract::{Multipart, Path as RoutePath, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     response::{AppendHeaders, Html, IntoResponse, Response},
     Extension,
 };
@@ -19,7 +19,7 @@ use crate::{
         files::{FSElement, InFile},
         storages::Storage,
     },
-    schemas::files::{InFileSchema, UploadParams, IN_FILE_SCHEMA_FIELDS_AMOUNT},
+    schemas::files::{InFileSchema, InFolderSchema, UploadParams, IN_FILE_SCHEMA_FIELDS_AMOUNT},
     services::{files::FilesService, storages::StoragesService},
     templates::{
         files::{list::FilesListTemplate, upload_to_form::UploadToFormTemplate},
@@ -28,6 +28,7 @@ use crate::{
 };
 
 const DOWNLOAD_ENDPOINT: &str = "/download";
+const HX_PROMPT: &str = "HX-PROMPT";
 
 pub struct FilesRouter;
 
@@ -134,11 +135,10 @@ impl FilesRouter {
                 return (StatusCode::BAD_REQUEST, "file field is not presented").into_response()
             }
         };
-        let path = Path::new(&params.path)
-            .with_file_name(filename)
-            .to_str()
-            .unwrap()
-            .to_string();
+        let path = match Self::construct_path(&params.path, &filename) {
+            Ok(p) => p,
+            Err(e) => return <(StatusCode, String)>::from(e).into_response(),
+        };
         let size = file.len() as i64;
         let in_file = InFile::new(path, size, storage_id);
 
@@ -147,7 +147,7 @@ impl FilesRouter {
             .upload(in_file, file, &user)
             .await
         {
-            todo!()
+            return <(StatusCode, String)>::from(e).into_response();
         };
 
         Self::get_upload_result(state, user, storage_id, &params.path).await
@@ -209,6 +209,52 @@ impl FilesRouter {
         };
 
         Self::get_upload_result(state, user, storage_id, &path).await
+    }
+
+    pub async fn create_folder(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+        Query(params): Query<UploadParams>,
+        RoutePath(storage_id): RoutePath<Uuid>,
+        headers: HeaderMap,
+    ) -> impl IntoResponse {
+        let in_schema = match || -> PentaractResult<InFolderSchema> {
+            // parsing folder name
+            let folder_name = headers
+                .get(HX_PROMPT)
+                .ok_or(PentaractError::HeaderMissed(HX_PROMPT.to_owned()))?
+                .to_str()
+                .map_err(|_| {
+                    PentaractError::HeaderIsInvalid(HX_PROMPT.to_owned(), "UTF-8 string".to_owned())
+                })?
+                .to_owned();
+
+            let schema = InFolderSchema::new(storage_id, params.path, folder_name);
+            Ok(schema)
+        }() {
+            Ok(s) => s,
+            Err(e) => return <(StatusCode, String)>::from(e).into_response(),
+        };
+
+        let path = in_schema.parent_path.clone();
+
+        // do all other stuff
+        match FilesService::new(&state.db, state.tx.clone())
+            .create_folder(in_schema, &user)
+            .await
+        {
+            Ok(_) => Self::get_upload_result(state, user, storage_id, &path).await,
+            Err(e) => <(StatusCode, String)>::from(e).into_response(),
+        }
+    }
+
+    #[inline]
+    fn construct_path(path: &str, filename: &str) -> PentaractResult<String> {
+        Path::new(path)
+            .with_file_name(filename)
+            .to_str()
+            .ok_or(PentaractError::InvalidPath)
+            .map(|p| p.to_string())
     }
 
     #[inline]

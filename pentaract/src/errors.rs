@@ -29,8 +29,14 @@ pub enum PentaractError {
     NoStorageWorkers,
     #[error("Invalid path")]
     InvalidPath,
+    #[error("Invalid folder name")]
+    InvalidFolderName,
     #[error("unknown error")]
     Unknown,
+    #[error("{0} header is required")]
+    HeaderMissed(String),
+    #[error("{0} header should be a valid {1}")]
+    HeaderIsInvalid(String, String),
 }
 
 impl From<PentaractError> for (StatusCode, String) {
@@ -39,6 +45,9 @@ impl From<PentaractError> for (StatusCode, String) {
             PentaractError::AlreadyExists(_) => (StatusCode::CONFLICT, e.to_string()),
             PentaractError::NotAuthenticated => (StatusCode::UNAUTHORIZED, e.to_string()),
             PentaractError::DoesNotExist(_) => (StatusCode::NOT_FOUND, e.to_string()),
+            PentaractError::HeaderMissed(_) => (StatusCode::BAD_REQUEST, e.to_string()),
+            PentaractError::HeaderIsInvalid(..) => (StatusCode::BAD_REQUEST, e.to_string()),
+            PentaractError::InvalidFolderName => (StatusCode::BAD_REQUEST, e.to_string()),
             _ => {
                 tracing::error!("{e}");
                 (
