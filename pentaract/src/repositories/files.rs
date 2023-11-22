@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use sqlx::{PgPool, QueryBuilder};
 use uuid::Uuid;
 
@@ -163,13 +165,61 @@ impl<'d> FilesRepository<'d> {
             .map_err(|_| PentaractError::Unknown)
             .map(|_| ())
     }
-
-    pub async fn delete(&self, file_id: Uuid) -> PentaractResult<()> {
+    pub async fn delete_with_folders(&self, id: Uuid) -> PentaractResult<()> {
         sqlx::query(format!("DELETE FROM {FILES_TABLE} WHERE id = $1").as_str())
-            .bind(file_id)
+            .bind(id)
             .execute(self.db)
             .await
             .map_err(|_| PentaractError::Unknown)
             .map(|_| ())
+    }
+
+    pub async fn delete(&self, path: &str, storage_id: Uuid) -> PentaractResult<()> {
+        let mut transaction = self.db.begin().await.map_err(|e| map_not_found(e, ""))?;
+
+        // deleting file
+        sqlx::query(&format!(
+            "
+            DELETE FROM {FILES_TABLE} 
+            WHERE storage_id = $1 AND path LIKE $2 || '%';
+            "
+        ))
+        .bind(storage_id)
+        .bind(path)
+        .execute(&mut *transaction)
+        .await
+        .map_err(|e| map_not_found(e, "file"))?;
+
+        // creating a folder if it was the file in the folder
+        if let Some(parent) = Path::new(path).parent().map(|path| path.to_str().unwrap()) {
+            let new_id = Uuid::new_v4();
+            let parent = format!("{parent}/");
+
+            sqlx::query(&format!(
+                "
+                INSERT INTO {FILES_TABLE} (id, path, size, storage_id, is_uploaded)
+                SELECT $1, $2, 0, $3, true 
+                WHERE 
+                    NOT EXISTS (
+                        SELECT id 
+                        FROM {FILES_TABLE}
+                        WHERE storage_id = $3 AND path LIKE $2 || '%'
+                    );
+            "
+            ))
+            .bind(new_id)
+            .bind(parent)
+            .bind(storage_id)
+            .execute(&mut *transaction)
+            .await
+            .map_err(|e| map_not_found(e, "some entity"))?;
+        }
+
+        transaction
+            .commit()
+            .await
+            .map_err(|e| map_not_found(e, ""))?;
+
+        Ok(())
     }
 }

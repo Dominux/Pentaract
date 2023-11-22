@@ -23,7 +23,7 @@
         </span>
 
         <ul 
-          class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect"
+          class="mdl-menu mdl-js-menu mdl-js-ripple-effect"
           for="menu-{{ file.name }}"
         >
           <li class="mdl-menu__item">Info</li>
@@ -38,7 +38,15 @@
             <li disabled class="mdl-menu__item mdl-menu__item--full-bleed-divider">Download</li>
           {% endif %}
 
-          <li class="mdl-menu__item">Delete</li>
+          <li 
+            class="mdl-menu__item"
+            hx-delete="/storages/{{ id }}/files/{{ file.path }}"
+            hx-trigger="click" 
+            hx-target="#storage" 
+            hx-swap="outerHTML transition:true"
+          >
+            Delete
+          </li>
         </ul>
       {% endif %}
     </li>

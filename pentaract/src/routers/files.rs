@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::Path, sync::Arc};
 use askama::Template;
 use axum::{
     body::Full,
-    extract::{Multipart, Path as RoutePath, Query, State},
+    extract::{DefaultBodyLimit, Multipart, Path as RoutePath, Query, State},
     http::{HeaderMap, StatusCode},
     middleware,
     response::{AppendHeaders, Html, IntoResponse, Response},
@@ -44,7 +44,8 @@ impl FilesRouter {
             .route("/upload", post(Self::upload))
             .route("/upload_to", post(Self::upload_to))
             .route("/upload_to_form", get(Self::get_upload_to_form))
-            .route("/*path", get(Self::dynamic_get))
+            .route("/*path", get(Self::dynamic_get).delete(Self::delete))
+            .layer(DefaultBodyLimit::disable())
             .route_layer(middleware::from_fn_with_state(
                 state.clone(),
                 logged_in_required,
@@ -160,7 +161,7 @@ impl FilesRouter {
             return <(StatusCode, String)>::from(e).into_response();
         };
 
-        Self::get_upload_result(state, user, storage_id, &params.path).await
+        Self::render_list(state, user, storage_id, &params.path).await
     }
 
     async fn upload_to(
@@ -218,7 +219,7 @@ impl FilesRouter {
             };
         };
 
-        Self::get_upload_result(state, user, storage_id, &path).await
+        Self::render_list(state, user, storage_id, &path).await
     }
 
     async fn create_folder(
@@ -253,7 +254,7 @@ impl FilesRouter {
             .create_folder(in_schema, &user)
             .await
         {
-            Ok(_) => Self::get_upload_result(state, user, storage_id, &path).await,
+            Ok(_) => Self::render_list(state, user, storage_id, &path).await,
             Err(e) => <(StatusCode, String)>::from(e).into_response(),
         }
     }
@@ -261,14 +262,14 @@ impl FilesRouter {
     #[inline]
     fn construct_path(path: &str, filename: &str) -> PentaractResult<String> {
         Path::new(path)
-            .with_file_name(filename)
+            .join(filename)
             .to_str()
             .ok_or(PentaractError::InvalidPath)
             .map(|p| p.to_string())
     }
 
     #[inline]
-    async fn get_upload_result(
+    async fn render_list(
         state: Arc<AppState>,
         user: AuthUser,
         storage_id: Uuid,
@@ -317,5 +318,26 @@ impl FilesRouter {
                 (headers, body).into_response()
             })
             .map_err(|e| <(StatusCode, String)>::from(e))
+    }
+
+    async fn delete(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+        RoutePath((storage_id, path)): RoutePath<(Uuid, String)>,
+    ) -> Result<Response, (StatusCode, String)> {
+        FilesService::new(&state.db, state.tx.clone())
+            .delete(&path, storage_id, &user)
+            .await
+            .map_err(|e| <(StatusCode, String)>::from(e))?;
+
+        // since we deleted the path, we take a parent one
+        let path = Path::new(&path)
+            .parent()
+            .map(|path| path.to_str().unwrap())
+            .unwrap_or("");
+
+        let mut response = Self::render_list(state, user, storage_id, &path).await;
+        *response.status_mut() = StatusCode::NO_CONTENT;
+        Ok(response)
     }
 }

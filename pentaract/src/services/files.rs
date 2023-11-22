@@ -100,7 +100,7 @@ impl<'d> FilesService<'d> {
             tracing::error!("{e}");
 
             // fallback logic: deleting file
-            let _ = self.repo.delete(file.id).await;
+            let _ = self.repo.delete_with_folders(file.id).await;
 
             return Err(e);
         };
@@ -149,6 +149,21 @@ impl<'d> FilesService<'d> {
 
     pub async fn list_dir(self, storage_id: Uuid, path: &str) -> PentaractResult<Vec<FSElement>> {
         self.repo.list_dir(storage_id, path).await
+    }
+
+    pub async fn delete(
+        &self,
+        path: &str,
+        storage_id: Uuid,
+        _user: &AuthUser,
+    ) -> PentaractResult<()> {
+        // 0. path validation
+        if !Self::validate_path(path) {
+            return Err(PentaractError::InvalidPath);
+        }
+
+        // 1. deleting file
+        self.repo.delete(path, storage_id).await
     }
 
     /////////////////////////////////////////////////////////////////////
