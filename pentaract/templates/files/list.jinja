@@ -8,7 +8,7 @@
       {% if file.is_file %}
         {% include "files/list_item.jinja" %}
       {% else %}
-        <a href="/storages/{{ id }}/files/{{ file.path }}" class="title-link">
+        <a href="/storages/{{ id }}/files/tree/{{ file.path }}" class="title-link">
           {% include "files/list_item.jinja" %}
         </a>
       {% endif %}
@@ -30,7 +30,7 @@
 
           {% if file.is_file %}
             <li class="mdl-menu__item mdl-menu__item--full-bleed-divider">
-              <a href="/storages/{{ id }}/files/{{ file.path }}/download" class="title-link">
+              <a href="/storages/{{ id }}/files/download/{{ file.path }}" class="title-link">
                 Download
               </a>
             </li>

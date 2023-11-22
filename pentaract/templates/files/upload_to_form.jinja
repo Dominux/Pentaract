@@ -15,7 +15,7 @@
   </button>
 
   <h1>Upload file</h1>
-  <form class="form upload-form" hx-encoding='multipart/form-data' hx-post="/storages/{{ storage_id }}/upload_to"
+  <form class="form upload-form" hx-encoding='multipart/form-data' hx-post="/storages/{{ storage_id }}/files/upload_to"
     hx-target="#form-wrapper" hx-swap="outerHTML transition:true">
 
     {% match path_err %}

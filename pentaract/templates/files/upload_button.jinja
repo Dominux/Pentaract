@@ -4,7 +4,7 @@
 <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect" for="menu-create">
   <li class="mdl-menu__item">
     <span
-      hx-post="/storages/{{ id }}/create_folder?path={{ path }}"
+      hx-post="/storages/{{ id }}/files/create_folder?path={{ path }}"
       hx-prompt="New folder"
       hx-target="#storage"
       hx-swap="outerHTML transition:true"
@@ -15,7 +15,7 @@
 
   <li class="mdl-menu__item">
     <form 
-      hx-post="/storages/{{ id }}/upload?path={{ path }}"
+      hx-post="/storages/{{ id }}/files/upload?path={{ path }}"
       hx-encoding="multipart/form-data"
       hx-trigger="change from:#upload-file-button"
       hx-target="#storage"
@@ -30,7 +30,7 @@
 
   <li class="mdl-menu__item">
     <span 
-      hx-get="/storages/{{ id }}/upload_form" 
+      hx-get="/storages/{{ id }}/files/upload_to_form" 
       hx-trigger="click" 
       hx-target="#storage" 
       hx-swap="outerHTML transition:true"

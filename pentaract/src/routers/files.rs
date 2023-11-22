@@ -5,15 +5,21 @@ use axum::{
     body::Full,
     extract::{Multipart, Path as RoutePath, Query, State},
     http::{HeaderMap, StatusCode},
+    middleware,
     response::{AppendHeaders, Html, IntoResponse, Response},
-    Extension,
+    routing::{get, post},
+    Extension, Router,
 };
 use reqwest::header;
 use tokio_util::bytes::Bytes;
 use uuid::Uuid;
 
 use crate::{
-    common::{helpers::not_ok, jwt_manager::AuthUser, routing::app_state::AppState},
+    common::{
+        helpers::not_ok,
+        jwt_manager::AuthUser,
+        routing::{app_state::AppState, middlewares::auth::logged_in_required},
+    },
     errors::{PentaractError, PentaractResult},
     models::{
         files::{FSElement, InFile},
@@ -27,43 +33,47 @@ use crate::{
     },
 };
 
-const DOWNLOAD_ENDPOINT: &str = "/download";
 const HX_PROMPT: &str = "HX-PROMPT";
 
 pub struct FilesRouter;
 
 impl FilesRouter {
-    pub async fn index(
+    pub fn get_router(state: Arc<AppState>) -> Router<Arc<AppState>, axum::body::Body> {
+        Router::new()
+            .route("/create_folder", post(Self::create_folder))
+            .route("/upload", post(Self::upload))
+            .route("/upload_to", post(Self::upload_to))
+            .route("/upload_to_form", get(Self::get_upload_to_form))
+            .route("/*path", get(Self::dynamic_get))
+            .route_layer(middleware::from_fn_with_state(
+                state.clone(),
+                logged_in_required,
+            ))
+            .with_state(state)
+    }
+
+    async fn dynamic_get(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
         RoutePath((storage_id, path)): RoutePath<(Uuid, String)>,
-    ) -> impl IntoResponse {
-        // dynamic path resolution
+    ) -> Result<Response, (StatusCode, String)> {
         let (root_path, path) = path.split_once("/").unwrap_or((&path, ""));
-        if root_path != "files" {
-            return (StatusCode::NOT_FOUND, "Not found").into_response();
-        };
-
-        let result = if path.ends_with(DOWNLOAD_ENDPOINT) {
-            let path = &path[..path.len().abs_diff(DOWNLOAD_ENDPOINT.len())];
-            Self::download(state, user, storage_id, path).await
-        } else {
-            Self::list(state, user, storage_id, path).await
-        };
-
-        match result {
-            Ok(o) => o,
-            Err(e) => <(StatusCode, String)>::from(e).into_response(),
+        match root_path {
+            "tree" => Self::tree(state, user, storage_id, path).await,
+            "download" => Self::download(state, user, storage_id, path).await,
+            _ => Err((StatusCode::NOT_FOUND, "Not found".to_owned())),
         }
     }
 
-    async fn list(
+    async fn tree(
         state: Arc<AppState>,
         user: AuthUser,
         storage_id: Uuid,
         path: &str,
-    ) -> PentaractResult<Response> {
-        let (storage, fs_layer) = Self::_list(state, user, storage_id, path).await?;
+    ) -> Result<Response, (StatusCode, String)> {
+        let (storage, fs_layer) = Self::_list(state, user, storage_id, path)
+            .await
+            .map_err(|e| <(StatusCode, String)>::from(e))?;
 
         let res = Html(
             StorageTemplate::new(storage_id, path, &storage.name, fs_layer)
@@ -112,13 +122,13 @@ impl FilesRouter {
         Ok((storage, fs_layer))
     }
 
-    pub async fn get_upload_to_form(RoutePath(storage_id): RoutePath<Uuid>) -> impl IntoResponse {
+    async fn get_upload_to_form(RoutePath(storage_id): RoutePath<Uuid>) -> impl IntoResponse {
         UploadToFormTemplate::new(storage_id, None, None)
             .render()
             .unwrap()
     }
 
-    pub async fn upload(
+    async fn upload(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
         Query(params): Query<UploadParams>,
@@ -153,7 +163,7 @@ impl FilesRouter {
         Self::get_upload_result(state, user, storage_id, &params.path).await
     }
 
-    pub async fn upload_to(
+    async fn upload_to(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
         RoutePath(storage_id): RoutePath<Uuid>,
@@ -211,7 +221,7 @@ impl FilesRouter {
         Self::get_upload_result(state, user, storage_id, &path).await
     }
 
-    pub async fn create_folder(
+    async fn create_folder(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
         Query(params): Query<UploadParams>,
@@ -281,12 +291,12 @@ impl FilesRouter {
         user: AuthUser,
         storage_id: Uuid,
         path: &str,
-    ) -> PentaractResult<Response> {
+    ) -> Result<Response, (StatusCode, String)> {
         FilesService::new(&state.db, state.tx.clone())
             .download(path, storage_id, &user)
             .await
             .map(|data| {
-                let filename = Path::new(path)
+                let filename = Path::new(&path)
                     .file_name()
                     .map(|name| name.to_str().unwrap_or_default())
                     .unwrap_or("unnamed.bin");
@@ -306,5 +316,6 @@ impl FilesRouter {
 
                 (headers, body).into_response()
             })
+            .map_err(|e| <(StatusCode, String)>::from(e))
     }
 }
