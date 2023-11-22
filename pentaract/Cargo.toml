@@ -3,6 +3,10 @@ name = "pentaract"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+strip = true
+codegen-units = 1
+
 [dependencies]
 # routing
 axum = { version = "0.6.20", features = ["headers", "tracing", "multipart"]}
@@ -16,7 +20,7 @@ askama = "0.12.1"
 
 # auth
 pwhash = "1.0.0"
-jsonwebtoken = {version = "9", default-features = false }
+jsonwebtoken = { version = "9", default-features = false }
 
 # async
 tokio = { version = "1.33.0", features = ["full"] }
