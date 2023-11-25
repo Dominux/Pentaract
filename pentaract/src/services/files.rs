@@ -159,6 +159,22 @@ impl<'d> FilesService<'d> {
         self.repo.list_dir(storage_id, path).await
     }
 
+    pub async fn rename(
+        &self,
+        old_path: &str,
+        new_path: &str,
+        storage_id: Uuid,
+        _user: &AuthUser,
+    ) -> PentaractResult<()> {
+        // 0. path validation
+        if !Self::validate_path(old_path) || !Self::validate_path(new_path) {
+            return Err(PentaractError::InvalidPath);
+        }
+
+        // 1. renaming file
+        self.repo.update_path(old_path, new_path, storage_id).await
+    }
+
     pub async fn delete(
         &self,
         path: &str,

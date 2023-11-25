@@ -250,6 +250,34 @@ impl<'d> FilesRepository<'d> {
             .map_err(|_| PentaractError::Unknown)
             .map(|_| ())
     }
+
+    pub async fn update_path(
+        &self,
+        old_path: &str,
+        new_path: &str,
+        storage_id: Uuid,
+    ) -> PentaractResult<()> {
+        let chars_skip = old_path.len();
+
+        sqlx::query(
+            format!(
+                "
+                UPDATE {FILES_TABLE} 
+                SET path = $1 || SUBSTRING(path, {chars_skip}) 
+                WHERE storage_id = $2 AND path LIKE $3 || '%'
+            "
+            )
+            .as_str(),
+        )
+        .bind(new_path)
+        .bind(old_path)
+        .bind(storage_id)
+        .execute(self.db)
+        .await
+        .map_err(|_| PentaractError::Unknown)
+        .map(|_| ())
+    }
+
     pub async fn delete_with_folders(&self, id: Uuid) -> PentaractResult<()> {
         sqlx::query(format!("DELETE FROM {FILES_TABLE} WHERE id = $1").as_str())
             .bind(id)
