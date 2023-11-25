@@ -155,7 +155,7 @@ impl FilesRouter {
 
         // do all other stuff
         if let Err(e) = FilesService::new(&state.db, state.tx.clone())
-            .upload(in_file, file, &user)
+            .upload_anyway(in_file, file, &user)
             .await
         {
             return <(StatusCode, String)>::from(e).into_response();

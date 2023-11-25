@@ -12,7 +12,7 @@ use crate::{
         jwt_manager::AuthUser,
     },
     errors::{PentaractError, PentaractResult},
-    models::files::{FSElement, InFile},
+    models::files::{FSElement, File, InFile},
     repositories::files::FilesRepository,
     schemas::files::{InFileSchema, InFolderSchema},
 };
@@ -56,18 +56,26 @@ impl<'d> FilesService<'d> {
         }
 
         let in_file = InFile::new(in_schema.path, in_schema.size, in_schema.storage_id);
-        self.upload(in_file, in_schema.file, user).await
+
+        // 1. saving file to db
+        let file = self.repo.create_file(in_file).await?;
+
+        self._upload(file, in_schema.file, user).await
     }
 
-    pub async fn upload(
+    pub async fn upload_anyway(
         &self,
         in_file: InFile,
         file_data: Bytes,
         user: &AuthUser,
     ) -> PentaractResult<()> {
         // 1. saving file in db
-        let file = self.repo.create_file(in_file).await?;
+        let file = self.repo.create_file_anyway(in_file).await?;
 
+        self._upload(file, file_data, user).await
+    }
+
+    async fn _upload(&self, file: File, file_data: Bytes, user: &AuthUser) -> PentaractResult<()> {
         // 2. sending file to storage manager
         let (resp_tx, resp_rx) = oneshot::channel();
 

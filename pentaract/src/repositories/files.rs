@@ -65,6 +65,91 @@ impl<'d> FilesRepository<'d> {
         Ok(storage)
     }
 
+    /// Creates a file even if the given path already exists
+    pub async fn create_file_anyway(&self, in_obj: InFile) -> PentaractResult<File> {
+        let id = Uuid::new_v4();
+        let chars_to_skip = in_obj.path.len() + 3; // if the name is `kek` then it's gonna be a len of `kek (` + 1
+
+        // https://www.db-fiddle.com/f/i6XCvTSi5cpAVu5AAfiNqm/16
+        sqlx::query_as(
+            format!(
+                r#"
+                INSERT INTO files (path, storage_id, id, size, is_uploaded)
+                WITH f AS (
+                    SELECT path
+                    FROM {FILES_TABLE}
+                    WHERE storage_id = $2 AND path ~ ('^(' || $1 || '|' || $1 || ' \(\d+\))$')
+                    ORDER BY path DESC
+                )
+                SELECT 
+                    CASE
+                        WHEN NOT EXISTS(
+                            SELECT path 
+                            FROM f 
+                            WHERE path = $1
+                        ) THEN $1
+                        ELSE
+                            CASE
+                                WHEN COUNT(f) > 1 THEN (
+                                    WITH cte AS (
+                                        SELECT *
+                                        FROM (
+                                            SELECT SUBSTRING(f.path, {chars_to_skip}, LENGTH(f.path) - {chars_to_skip})::numeric AS i
+                                            FROM f
+                                            WHERE f.path != $1
+                                        ) AS n
+                                        WHERE i > 0
+                                        ORDER BY i
+                                    )
+                                    SELECT $1 || ' (' || COALESCE(t.next_i, (
+                                        SELECT cte.i + 1 
+                                        FROM cte 
+                                        ORDER BY cte.i DESC 
+                                        LIMIT 1
+                                    )) || ')'
+                                    FROM cte
+                                    FULL OUTER JOIN (
+                                        SELECT prev_i + 1 AS next_i
+                                        FROM (
+                                            SELECT LAG(i, 1, 0) OVER() AS prev_i, i
+                                            FROM cte
+                                        ) t
+                                        WHERE prev_i != t.i - 1
+                                        LIMIT 1
+                                    ) t ON cte.i = t.next_i
+                                    LIMIT 1
+                                )
+                                WHEN COUNT(f) = 1 THEN $1 || ' (1)'
+                                ELSE $1
+                            END
+                    END,
+                    $2,
+                    $3,
+                    $4,
+                    false
+                FROM f
+                RETURNING *;
+            "#
+            )
+            .as_str(),
+        )
+        .bind(&in_obj.path)
+        .bind(in_obj.storage_id)
+        .bind(id)
+        .bind(in_obj.size)
+        .fetch_one(self.db)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::Database(dbe) if dbe.is_foreign_key_violation() => {
+                PentaractError::DoesNotExist("such storage".to_string())
+            }
+            _ => {
+                tracing::error!("{e}");
+                PentaractError::Unknown
+            }
+        })
+    }
+
     pub async fn create_chunks_batch(&self, chunks: Vec<FileChunk>) -> PentaractResult<()> {
         QueryBuilder::new(
             format!("INSERT INTO {CHUNKS_TABLE} (id, file_id, telegram_file_id, position)")
