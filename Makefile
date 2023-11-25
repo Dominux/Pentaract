@@ -3,3 +3,6 @@ up:
 
 down:
 	docker compose down
+
+run_ui:
+	cd ui && pnpm run dev || cd -
