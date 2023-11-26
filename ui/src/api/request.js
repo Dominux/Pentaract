@@ -1,13 +1,18 @@
-type Method = "get" | "post" | "patch" | "delete";
-
 const API_BASE = "http://localhost:8080/api";
 
-const api_request = async <T>(
-  path: string,
-  method: Method,
-  auth_token?: string,
-  body?: any
-): Promise<T> => {
+/**
+ * @typedef {'get' | 'post' | 'patch' | 'delete'} Method
+ */
+
+/**
+ *
+ * @param {string} path
+ * @param {Method} method
+ * @param {string | null | undefined} auth_token
+ * @param {any} body
+ * @returns
+ */
+const api_request = async (path, method, auth_token, body) => {
   const fullpath = `${API_BASE}${path}`;
 
   const headers = new Headers();

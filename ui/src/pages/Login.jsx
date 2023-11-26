@@ -1,4 +1,4 @@
-import { Component } from "solid-js";
+import { onMount } from "solid-js";
 import Container from "@suid/material/Container";
 import Box from "@suid/material/Box";
 import TextField from "@suid/material/TextField";
@@ -7,21 +7,38 @@ import Paper from "@suid/material/Paper";
 import Typography from "@suid/material/Typography";
 import Divider from "@suid/material/Divider";
 import createLocalStore from "../../libs";
+import { useNavigate } from "@solidjs/router";
+
 import API from "../api";
 
-const Login: Component = () => {
-  const [_store, setStore] = createLocalStore();
+const Login = () => {
+  const [store, setStore] = createLocalStore();
+  const navigate = useNavigate();
 
-  const handleSubmit = async (event: SubmitEvent) => {
+  onMount(() => {
+    // If user is registered => moving him to rooms
+    if (store.access_token) {
+      navigate("/");
+    }
+  });
+
+  /**
+   *
+   * @param {SubmitEvent} event
+   */
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
 
-    const loginResponse = await API.auth.login(
+    const tokenData = await API.auth.login(
       data.get("username"),
       data.get("password")
     );
 
-    setStore("access_token", loginResponse.access_token);
+    setStore("access_token", tokenData.access_token);
+
+    const redirect_url = store.redirect || "/";
+    navigate(redirect_url);
   };
 
   return (
