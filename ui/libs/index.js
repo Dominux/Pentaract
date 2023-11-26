@@ -33,14 +33,17 @@ function createLocalStore(prefix = null, storage = localStorage) {
           if (getListener()) {
             let node = signals.get(key);
             if (!node) {
-              // @ts-ignore
               node = createSignal(undefined, { equals: false });
               signals.set(key, node);
             }
             node[0]();
           }
           const value = storage.getItem(`${propPrefix}${key}`);
-          return JSON.parse(value);
+          try {
+            return JSON.parse(value);
+          } catch (_) {
+            return undefined;
+          }
         },
       }
     ),

@@ -16,7 +16,6 @@ const Login = () => {
   const navigate = useNavigate();
 
   onMount(() => {
-    // If user is registered => moving him to rooms
     if (store.access_token) {
       navigate("/");
     }
