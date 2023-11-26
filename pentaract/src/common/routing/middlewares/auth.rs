@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     extract::State,
-    headers::{Cookie, HeaderMapExt},
+    headers::{authorization::Bearer, Authorization, HeaderMapExt},
     http::{HeaderMap, HeaderValue, Request},
     middleware::Next,
     response::{Redirect, Response},
@@ -10,7 +10,6 @@ use axum::{
 
 use crate::{
     common::{
-        constants::ACCESS_TOKEN_NAME,
         jwt_manager::{AuthUser, JWTManager},
         routing::app_state::AppState,
     },
@@ -30,26 +29,11 @@ pub async fn logged_in_required<B>(
     Ok(next.run(req).await)
 }
 
-/// Middleware that requires to be logged out
-pub async fn logged_out_required<B>(
-    State(state): State<Arc<AppState>>,
-    req: Request<B>,
-    next: Next<B>,
-) -> Result<Response, Redirect> {
-    match authenticate(req.headers(), &state.config.secret_key) {
-        Ok(_) => Err(Redirect::to("/")),
-        _ => Ok(next.run(req).await),
-    }
-}
-
 #[inline]
 fn authenticate(headers: &HeaderMap<HeaderValue>, secret_key: &str) -> PentaractResult<AuthUser> {
-    let cookies = headers
-        .typed_get::<Cookie>()
-        .ok_or(PentaractError::NotAuthenticated)?;
-    let token = cookies
-        .get(ACCESS_TOKEN_NAME)
+    let auth_header = headers
+        .typed_get::<Authorization<Bearer>>()
         .ok_or(PentaractError::NotAuthenticated)?;
 
-    JWTManager::validate(token, secret_key)
+    JWTManager::validate(auth_header.token(), secret_key)
 }

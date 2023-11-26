@@ -12,7 +12,7 @@ codegen-units = 1
 axum = { version = "0.6.20", features = ["headers", "tracing", "multipart"]}
 mime_guess = "2.0.4"
 tower = { version = "0.4.13", features = ["limit"] }
-tower-http = { version = "0.4.4", features = ["trace"], default_features = false }
+tower-http = { version = "0.4.4", features = ["trace", "cors"], default_features = false }
 
 # serialization/deserialization
 serde = { version = "1.0.189", features = ["derive"] }
