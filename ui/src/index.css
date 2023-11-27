@@ -2,3 +2,7 @@ a.headline {
   text-decoration: none;
   color: white;
 }
+
+.drawer-paper.MuiDrawer-paper {
+  position: relative;
+}
