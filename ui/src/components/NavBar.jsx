@@ -11,17 +11,14 @@ import ChevronLeftIcon from "@suid/icons-material/ChevronLeft";
 import ChevronRightIcon from "@suid/icons-material/ChevronRight";
 import ListItem from "@suid/material/ListItem";
 import ListItemButton from "@suid/material/ListItemButton";
-import ListItemIcon from "@suid/material/ListItemIcon";
-import ListItemText from "@suid/material/ListItemText";
 import InboxIcon from "@suid/icons-material/MoveToInbox";
-import MailIcon from "@suid/icons-material/Mail";
 import { createSignal } from "solid-js";
 import { A, useNavigate } from "@solidjs/router";
 import createLocalStore from "../../libs";
 import Logout from "@suid/icons-material/Logout";
+import NavBarSideBarItem from "./NavBarSideBarItem";
 
-const drawerWidth = 240;
-const initOpen = window.innerWidth > 600 + drawerWidth;
+const initOpen = window.innerWidth > 840;
 
 const NavBar = () => {
   const [open, setOpen] = createSignal(initOpen);
@@ -43,12 +40,10 @@ const NavBar = () => {
     <Box>
       <CssBaseline />
 
-      <AppBar position="relative">
+      <AppBar position="static">
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography variant="h4" noWrap component="div">
-            <A class="headline" href="/">
-              Pentaract
-            </A>
+            <A href="/">Pentaract</A>
           </Typography>
 
           <IconButton onClick={logout}>
@@ -57,12 +52,15 @@ const NavBar = () => {
         </Toolbar>
       </AppBar>
 
-      <Box sx={{ display: "inline-flex" }}>
+      <Box sx={{ display: "flex" }}>
         <Drawer
           variant="permanent"
           open
-          classes={{ paper: "drawer-paper" }}
-          sx={{ width: open() ? drawerWidth : "initial" }}
+          classes={{
+            paper: open()
+              ? "drawer-paper drawer-paper-opened"
+              : "drawer-paper drawer-paper-closed",
+          }}
         >
           <List>
             <ListItem disablePadding sx={{ display: "block" }}>
@@ -82,59 +80,16 @@ const NavBar = () => {
           </List>
           <Divider />
           <List>
-            {["Inbox", "Starred", "Send email", "Drafts"].map((text, index) => (
-              <ListItem key={text} disablePadding sx={{ display: "block" }}>
-                <ListItemButton
-                  sx={{
-                    minHeight: 48,
-                    justifyContent: open() ? "initial" : "center",
-                    px: 2.5,
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 0,
-                      mr: open() ? 3 : "auto",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={text}
-                    sx={{ display: open() ? "border-box" : "none" }}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-          <Divider />
-          <List>
-            {["All mail", "Trash", "Spam"].map((text, index) => (
-              <ListItem key={text} disablePadding sx={{ display: "block" }}>
-                <ListItemButton
-                  sx={{
-                    minHeight: 48,
-                    justifyContent: open() ? "initial" : "center",
-                    px: 2.5,
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 0,
-                      mr: open() ? 3 : "auto",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={text}
-                    sx={{ display: open() ? "border-box" : "none" }}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
+            <NavBarSideBarItem text="Storages" link="/storages" isFull={open()}>
+              <InboxIcon />
+            </NavBarSideBarItem>
+            <NavBarSideBarItem
+              text="Storage workers"
+              link="/storages_workers"
+              isFull={open()}
+            >
+              <InboxIcon />
+            </NavBarSideBarItem>
           </List>
         </Drawer>
 

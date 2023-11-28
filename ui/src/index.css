@@ -1,8 +1,15 @@
-a.headline {
+a {
   text-decoration: none;
-  color: white;
+  color: inherit;
 }
 
 .drawer-paper.MuiDrawer-paper {
-  position: relative;
+  position: static;
+  height: 100%;
+}
+.drawer-paper-opened.MuiDrawer-paper {
+  width: 240px;
+}
+.drawer-paper-closed.MuiDrawer-paper {
+  width: initial;
 }
