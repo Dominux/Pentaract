@@ -6,7 +6,7 @@ import ListItemText from "@suid/material/ListItemText";
 import { children } from "solid-js";
 
 /**
- * @typedef {Object} NavBarSideBarItemProps
+ * @typedef {Object} SideBarItemProps
  * @property {string} text
  * @property {boolean} isFull
  * @property {string} link
@@ -15,9 +15,9 @@ import { children } from "solid-js";
 
 /**
  *
- * @param {NavBarSideBarItemProps} props
+ * @param {SideBarItemProps} props
  */
-const NavBarSideBarItem = (props) => {
+const SideBarItem = (props) => {
   const c = children(() => props.children);
 
   return (
@@ -49,4 +49,4 @@ const NavBarSideBarItem = (props) => {
   );
 };
 
-export default NavBarSideBarItem;
+export default SideBarItem;

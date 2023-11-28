@@ -1,68 +1,46 @@
 import Box from "@suid/material/Box";
 import Drawer from "@suid/material/Drawer";
-import AppBar from "@suid/material/AppBar";
-import Toolbar from "@suid/material/Toolbar";
 import List from "@suid/material/List";
 import CssBaseline from "@suid/material/CssBaseline";
-import Typography from "@suid/material/Typography";
 import Divider from "@suid/material/Divider";
 import IconButton from "@suid/material/IconButton";
 import ChevronLeftIcon from "@suid/icons-material/ChevronLeft";
 import ChevronRightIcon from "@suid/icons-material/ChevronRight";
 import ListItem from "@suid/material/ListItem";
 import ListItemButton from "@suid/material/ListItemButton";
-import InboxIcon from "@suid/icons-material/MoveToInbox";
 import { children, createSignal } from "solid-js";
-import { A, useNavigate } from "@solidjs/router";
-import createLocalStore from "../../libs";
-import Logout from "@suid/icons-material/Logout";
-import NavBarSideBarItem from "./NavBarSideBarItem";
+import StorageIcon from "@suid/icons-material/Storage";
+import SmartToyIcon from "@suid/icons-material/SmartToyOutlined";
+import Container from "@suid/material/Container";
+import Toolbar from "@suid/material/Toolbar";
+
+import SideBarItem from "./SideBarItem";
 
 const initOpen = window.innerWidth > 840;
 
 /**
- * @typedef {Object} NavBarProps
+ * @typedef {Object} SideBarProps
  * @property {import("solid-js").JSXElement[]} children
  */
 
 /**
  *
- * @param {NavBarProps} props
+ * @param {SideBarProps} props
  */
-const NavBar = (props) => {
+const SideBar = (props) => {
   const [open, setOpen] = createSignal(initOpen);
-  const [_store, setStore] = createLocalStore();
-  const navigate = useNavigate();
   const c = children(() => props.children);
-
-  const logout = (_) => {
-    setStore("access_token");
-    setStore("redirect", "/");
-
-    navigate("/login");
-  };
 
   const toggleDrawerOpen = () => {
     setOpen((open) => !open);
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <Box>
       <CssBaseline />
+      <Toolbar />
 
-      <AppBar position="static" sx={{ width: "100vw" }}>
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h4" noWrap component="div">
-            <A href="/">Pentaract</A>
-          </Typography>
-
-          <IconButton onClick={logout}>
-            <Logout />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-
-      <Box sx={{ display: "flex", height: "100%" }}>
+      <Box sx={{ display: "flex" }}>
         <Drawer
           variant="permanent"
           open
@@ -90,25 +68,23 @@ const NavBar = (props) => {
           </List>
           <Divider />
           <List>
-            <NavBarSideBarItem text="Storages" link="/storages" isFull={open()}>
-              <InboxIcon />
-            </NavBarSideBarItem>
-            <NavBarSideBarItem
+            <SideBarItem text="Storages" link="/storages" isFull={open()}>
+              <StorageIcon />
+            </SideBarItem>
+            <SideBarItem
               text="Storage workers"
               link="/storages_workers"
               isFull={open()}
             >
-              <InboxIcon />
-            </NavBarSideBarItem>
+              <SmartToyIcon />
+            </SideBarItem>
           </List>
         </Drawer>
 
-        <Box component="main" sx={{ p: 4 }}>
-          {c()}
-        </Box>
+        <Container sx={{ display: "flex", height: "100%" }}>{c()}</Container>
       </Box>
     </Box>
   );
 };
 
-export default NavBar;
+export default SideBar;
