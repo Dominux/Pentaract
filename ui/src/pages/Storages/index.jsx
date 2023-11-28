@@ -1,4 +1,6 @@
-import { Typography } from "@suid/material";
+import Typography from "@suid/material/Typography";
+import Grid from "@suid/material/Grid";
+import Stack from "@suid/material/Stack";
 import Paper from "@suid/material/Paper";
 import Table from "@suid/material/Table";
 import TableBody from "@suid/material/TableBody";
@@ -6,7 +8,8 @@ import TableCell from "@suid/material/TableCell";
 import TableContainer from "@suid/material/TableContainer";
 import TableHead from "@suid/material/TableHead";
 import TableRow from "@suid/material/TableRow";
-import { mapArray } from "solid-js";
+import Button from "@suid/material/Button";
+import { Show, mapArray } from "solid-js";
 
 function createData(name, calories, fat, carbs, protein) {
   return { name, calories, fat, carbs, protein };
@@ -22,36 +25,53 @@ const rows = [
 
 const Storages = () => {
   return (
-    <>
-      <Typography variant="h4">Storages</Typography>
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Size</TableCell>
-              <TableCell>Files</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {mapArray(
-              () => rows,
-              (row) => (
-                <TableRow
-                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                >
-                  <TableCell component="th" scope="row">
-                    {row.name}
-                  </TableCell>
-                  <TableCell>{row.calories}</TableCell>
-                  <TableCell>{row.fat}</TableCell>
+    <Stack container>
+      <Grid container sx={{ mb: 2 }}>
+        <Grid item xs={6}>
+          <Typography variant="h4">Storages</Typography>
+        </Grid>
+        <Grid item xs={6} sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Button variant="contained" color="success">
+            Create new
+          </Button>
+        </Grid>
+      </Grid>
+
+      <Grid>
+        <TableContainer component={Paper}>
+          <Table sx={{ minWidth: 650 }}>
+            <Show
+              when={rows.length}
+              fallback={<div>There's no storages yet</div>}
+            >
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Size</TableCell>
+                  <TableCell>Files</TableCell>
                 </TableRow>
-              )
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </>
+              </TableHead>
+              <TableBody>
+                {mapArray(
+                  () => rows,
+                  (row) => (
+                    <TableRow
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {row.name}
+                      </TableCell>
+                      <TableCell>{row.calories}</TableCell>
+                      <TableCell>{row.fat}</TableCell>
+                    </TableRow>
+                  )
+                )}
+              </TableBody>
+            </Show>
+          </Table>
+        </TableContainer>
+      </Grid>
+    </Stack>
   );
 };
 
