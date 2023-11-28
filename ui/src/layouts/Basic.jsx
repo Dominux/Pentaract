@@ -10,8 +10,9 @@ const BasicLayout = () => {
 
   return (
     <Box sx={{ display: "flex" }}>
-      <NavBar />
-      <Outlet />
+      <NavBar>
+        <Outlet />
+      </NavBar>
     </Box>
   );
 };
