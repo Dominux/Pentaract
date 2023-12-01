@@ -9,23 +9,24 @@ import TableContainer from "@suid/material/TableContainer";
 import TableHead from "@suid/material/TableHead";
 import TableRow from "@suid/material/TableRow";
 import Button from "@suid/material/Button";
-import { Show, mapArray } from "solid-js";
+import { Show, createSignal, mapArray, onMount } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 
-function createData(name, calories, fat, carbs, protein) {
-  return { name, calories, fat, carbs, protein };
-}
-
-const rows = [
-  createData("Frozen yoghurt", 159, 6.0, 24, 4.0),
-  createData("Ice cream sandwich", 237, 9.0, 37, 4.3),
-  createData("Eclair", 262, 16.0, 24, 6.0),
-  createData("Cupcake", 305, 3.7, 67, 4.3),
-  createData("Gingerbread", 356, 16.0, 49, 3.9),
-];
+import API from "../../api";
 
 const Storages = () => {
+  /**
+   * @type {[import("solid-js").Accessor<import("../../api").Storage[]>, any]}
+   */
+  const [storages, setStorages] = createSignal([]);
   const navigate = useNavigate();
+
+  onMount(async () => {
+    const storagesSchema = await API.storages.listStorages();
+    setStorages(storagesSchema.storages);
+
+    console.log(storages());
+  });
 
   return (
     <Stack container>
@@ -48,31 +49,30 @@ const Storages = () => {
         <TableContainer component={Paper}>
           <Table sx={{ minWidth: 650 }}>
             <Show
-              when={rows.length}
+              when={storages().length}
               fallback={<div>There's no storages yet</div>}
             >
               <TableHead>
                 <TableRow>
                   <TableCell>Name</TableCell>
+                  <TableCell>Chat ID</TableCell>
                   <TableCell>Size</TableCell>
                   <TableCell>Files</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {mapArray(
-                  () => rows,
-                  (row) => (
-                    <TableRow
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {row.name}
-                      </TableCell>
-                      <TableCell>{row.calories}</TableCell>
-                      <TableCell>{row.fat}</TableCell>
-                    </TableRow>
-                  )
-                )}
+                {mapArray(storages, (storage) => (
+                  <TableRow
+                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                  >
+                    <TableCell component="th" scope="row">
+                      {storage.name}
+                    </TableCell>
+                    <TableCell>{storage.chat_id}</TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Show>
           </Table>

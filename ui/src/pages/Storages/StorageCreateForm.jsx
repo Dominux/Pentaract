@@ -5,6 +5,8 @@ import TextField from "@suid/material/TextField";
 import Typography from "@suid/material/Typography";
 import { createSignal } from "solid-js";
 import { useNavigate } from "@solidjs/router";
+import Stack from "@suid/material/Stack";
+import ChevronLeftIcon from "@suid/icons-material/ChevronLeft";
 
 import API from "../../api";
 import { alertStore } from "../../components/AlertStack";
@@ -53,46 +55,57 @@ const StorageCreateForm = () => {
   };
 
   return (
-    <Box
-      component="form"
-      onSubmit={handleSubmit}
-      sx={{
-        px: 5,
-        py: 2,
-        mx: "auto",
-        maxWidth: 400,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        "& > :not(style)": { my: 1.5 },
-      }}
-    >
-      <Typography variant="h5">Register new storage</Typography>
-      <Divider />
-      <TextField
-        id="name"
-        name="name"
-        label="Name"
-        variant="standard"
-        fullWidth
-        required
-      />
-      <TextField
-        id="chat_id"
-        name="chat_id"
-        label="Chat id"
-        type="number"
-        variant="standard"
-        onChange={validateChatId}
-        helperText={chatIdErr}
-        error={typeof chatIdErr() === "string"}
-        fullWidth
-        required
-      />
-      <Button type="submit" variant="contained" color="success">
-        Register
-      </Button>
-    </Box>
+    <Stack sx={{ maxWidth: 540, minWidth: 320, mx: "auto" }}>
+      <Box>
+        <Button
+          onClick={() => navigate("/storages")}
+          variant="outlined"
+          startIcon={<ChevronLeftIcon />}
+        >
+          Back
+        </Button>
+      </Box>
+
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{
+          py: 2,
+          mx: "auto",
+          maxWidth: 400,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          "& > :not(style)": { my: 1.5 },
+        }}
+      >
+        <Typography variant="h5">Register new storage</Typography>
+        <Divider />
+        <TextField
+          id="name"
+          name="name"
+          label="Name"
+          variant="standard"
+          fullWidth
+          required
+        />
+        <TextField
+          id="chat_id"
+          name="chat_id"
+          label="Chat id"
+          type="number"
+          variant="standard"
+          onChange={validateChatId}
+          helperText={chatIdErr}
+          error={typeof chatIdErr() === "string"}
+          fullWidth
+          required
+        />
+        <Button type="submit" variant="contained" color="success">
+          Register
+        </Button>
+      </Box>
+    </Stack>
   );
 };
 
