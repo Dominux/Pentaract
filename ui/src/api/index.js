@@ -1,3 +1,5 @@
+import createLocalStore from "../../libs";
+
 import api_request from "./request";
 
 /**
@@ -18,10 +20,31 @@ const login = async (username, password) => {
   });
 };
 
+/**
+ *
+ * @param {string} name
+ * @param {number} chat_id
+ * @returns
+ */
+const createStorage = async (name, chat_id) => {
+  return await api_request("/storages", "post", getAuthToken(), {
+    name,
+    chat_id,
+  });
+};
+
 const API = {
   auth: {
     login,
   },
+  storages: {
+    createStorage,
+  },
+};
+
+const getAuthToken = () => {
+  const [store, _setStore] = createLocalStore();
+  return `Bearer ${store.access_token}`;
 };
 
 export default API;

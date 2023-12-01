@@ -39,6 +39,9 @@ impl<'d> StoragesRepository<'d> {
             sqlx::Error::Database(dbe) if dbe.is_foreign_key_violation() => {
                 PentaractError::UserWasRemoved
             }
+            sqlx::Error::Database(dbe) if dbe.is_unique_violation() => {
+                PentaractError::StorageChatIdConflict
+            }
             _ => {
                 tracing::error!("{e}");
                 PentaractError::Unknown

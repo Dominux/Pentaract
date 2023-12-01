@@ -7,7 +7,7 @@ use axum::{
     middleware,
     response::{Html, IntoResponse},
     routing::get,
-    Extension, Form, Router,
+    Extension, Json, Router,
 };
 
 use crate::{
@@ -15,7 +15,7 @@ use crate::{
         jwt_manager::AuthUser,
         routing::{app_state::AppState, middlewares::auth::logged_in_required},
     },
-    errors::{PentaractError, PentaractResult},
+    errors::PentaractResult,
     schemas::storages::InStorageSchema,
     services::storages::StoragesService,
     templates::storages::{
@@ -24,7 +24,7 @@ use crate::{
     },
 };
 
-use super::{auth::AuthRouter, files::FilesRouter};
+use super::files::FilesRouter;
 
 pub struct StoragesRouter;
 
@@ -61,32 +61,12 @@ impl StoragesRouter {
     async fn create(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
-        Form(in_schema): Form<InStorageSchema>,
+        Json(in_schema): Json<InStorageSchema>,
     ) -> impl IntoResponse {
-        let service = StoragesService::new(&state.db);
-
-        if let Err(e) = service.create(in_schema, &user).await {
-            return match e {
-                PentaractError::StorageNameConflict => (
-                    StatusCode::CONFLICT,
-                    Html(
-                        StoragesCreateFormTemplate::new(Some("This name isn't unique"))
-                            .render()
-                            .unwrap(),
-                    ),
-                )
-                    .into_response(),
-                PentaractError::UserWasRemoved => {
-                    AuthRouter::logout_for_htmx().await.into_response()
-                }
-                _ => (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong").into_response(),
-            };
-        };
-
-        match Self::_list(service, &user).await {
-            Ok(page) => (StatusCode::CREATED, page).into_response(),
-            Err(e) => <(StatusCode, String)>::from(e).into_response(),
-        }
+        let storage = StoragesService::new(&state.db)
+            .create(in_schema, &user)
+            .await?;
+        Ok::<_, (StatusCode, String)>((StatusCode::OK, Json(storage)))
     }
 
     async fn list(

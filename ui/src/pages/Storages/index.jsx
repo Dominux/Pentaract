@@ -10,6 +10,7 @@ import TableHead from "@suid/material/TableHead";
 import TableRow from "@suid/material/TableRow";
 import Button from "@suid/material/Button";
 import { Show, mapArray } from "solid-js";
+import { useNavigate } from "@solidjs/router";
 
 function createData(name, calories, fat, carbs, protein) {
   return { name, calories, fat, carbs, protein };
@@ -24,6 +25,8 @@ const rows = [
 ];
 
 const Storages = () => {
+  const navigate = useNavigate();
+
   return (
     <Stack container>
       <Grid container sx={{ mb: 2 }}>
@@ -31,8 +34,12 @@ const Storages = () => {
           <Typography variant="h4">Storages</Typography>
         </Grid>
         <Grid item xs={6} sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button variant="contained" color="success">
-            Create new
+          <Button
+            onClick={() => navigate("/storages/register")}
+            variant="contained"
+            color="success"
+          >
+            Register new
           </Button>
         </Grid>
       </Grid>

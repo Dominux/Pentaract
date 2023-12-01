@@ -5,8 +5,9 @@ use axum::{
     headers::{authorization::Bearer, Authorization, HeaderMapExt},
     http::{HeaderMap, HeaderValue, Request},
     middleware::Next,
-    response::{Redirect, Response},
+    response::Response,
 };
+use reqwest::StatusCode;
 
 use crate::{
     common::{
@@ -21,9 +22,9 @@ pub async fn logged_in_required<B>(
     State(state): State<Arc<AppState>>,
     mut req: Request<B>,
     next: Next<B>,
-) -> Result<Response, Redirect> {
+) -> Result<Response, (StatusCode, String)> {
     let auth_user = authenticate(req.headers(), &state.config.secret_key)
-        .map_err(|_| Redirect::to("/auth/login"))?;
+        .map_err(|e| <(StatusCode, String)>::from(e))?;
 
     req.extensions_mut().insert(auth_user);
     Ok(next.run(req).await)

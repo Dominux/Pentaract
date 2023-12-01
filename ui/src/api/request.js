@@ -1,3 +1,5 @@
+import { alertStore } from "../components/AlertStack";
+
 const API_BASE = "http://localhost:8080/api";
 
 /**
@@ -13,6 +15,8 @@ const API_BASE = "http://localhost:8080/api";
  * @returns
  */
 const api_request = async (path, method, auth_token, body) => {
+  const { addAlert } = alertStore;
+
   const fullpath = `${API_BASE}${path}`;
 
   const headers = new Headers();
@@ -27,10 +31,16 @@ const api_request = async (path, method, auth_token, body) => {
       body: JSON.stringify(body),
       headers,
     });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
     return await response.json();
-  } catch (error) {
-    // TODO: add graceful error handling
-    throw error;
+  } catch (err) {
+    addAlert(err.message, "error");
+
+    throw err;
   }
 };
 

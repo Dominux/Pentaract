@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 use crate::common::types::ChatId;
 
 pub struct InStorage {
@@ -16,7 +18,7 @@ impl InStorage {
     }
 }
 
-#[derive(Debug, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct Storage {
     pub id: uuid::Uuid,
     pub name: String,

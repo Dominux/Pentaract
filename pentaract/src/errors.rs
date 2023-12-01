@@ -17,6 +17,8 @@ pub enum PentaractError {
     DoesNotExist(String),
     #[error("User already has a storage with such name")]
     StorageNameConflict,
+    #[error("User already has a storage with such chat id")]
+    StorageChatIdConflict,
     #[error("User already has a storage worker with such name")]
     StorageWorkerNameConflict,
     #[error("Token must be unique")]
@@ -43,6 +45,8 @@ impl From<PentaractError> for (StatusCode, String) {
     fn from(e: PentaractError) -> Self {
         match &e {
             PentaractError::AlreadyExists(_) => (StatusCode::CONFLICT, e.to_string()),
+            PentaractError::StorageNameConflict => (StatusCode::CONFLICT, e.to_string()),
+            PentaractError::StorageChatIdConflict => (StatusCode::CONFLICT, e.to_string()),
             PentaractError::NotAuthenticated => (StatusCode::UNAUTHORIZED, e.to_string()),
             PentaractError::DoesNotExist(_) => (StatusCode::NOT_FOUND, e.to_string()),
             PentaractError::HeaderMissed(_) => (StatusCode::BAD_REQUEST, e.to_string()),

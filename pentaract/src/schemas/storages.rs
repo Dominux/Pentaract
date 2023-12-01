@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use uuid::Uuid;
 
 use crate::common::types::ChatId;
 
