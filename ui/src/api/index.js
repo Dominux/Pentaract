@@ -1,6 +1,6 @@
 import createLocalStore from "../../libs";
 
-import api_request from "./request";
+import apiRequest from "./request";
 
 /**
  * @typedef {Object} TokenData
@@ -14,7 +14,7 @@ import api_request from "./request";
  * @returns {Promise<TokenData>}
  */
 const login = async (username, password) => {
-  return await api_request("/auth/login", "post", undefined, {
+  return await apiRequest("/auth/login", "post", undefined, {
     username,
     password,
   });
@@ -27,7 +27,7 @@ const login = async (username, password) => {
  * @returns
  */
 const createStorage = async (name, chat_id) => {
-  return await api_request("/storages", "post", getAuthToken(), {
+  return await apiRequest("/storages", "post", getAuthToken(), {
     name,
     chat_id,
   });
@@ -50,7 +50,38 @@ const createStorage = async (name, chat_id) => {
  * @returns {Promise<StoragesSchema>}
  */
 const listStorages = async () => {
-  return await api_request("/storages", "get", getAuthToken());
+  return await apiRequest("/storages", "get", getAuthToken());
+};
+
+/**
+ * @typedef {Object} StorageWorker
+ * @property {string} id
+ * @property {string} name
+ * @property {number} storage_id
+ * @property {number} token
+ */
+
+/**
+ *
+ * @param {string} name
+ * @param {string} token
+ * @param {string | null | undefined} storage_id
+ * @returns {Promise<StorageWorker>}
+ */
+const createStorageWorker = async (name, token, storage_id) => {
+  return await apiRequest("/storage_workers", "post", getAuthToken(), {
+    name,
+    token,
+    storage_id,
+  });
+};
+
+/**
+ *
+ * @returns {Promise<StorageWorker[]>}
+ */
+const listStorageWorkers = async () => {
+  return await apiRequest("/storage_workers", "get", getAuthToken());
 };
 
 const API = {
@@ -60,6 +91,10 @@ const API = {
   storages: {
     createStorage,
     listStorages,
+  },
+  storageWorkers: {
+    createStorageWorker,
+    listStorageWorkers,
   },
 };
 

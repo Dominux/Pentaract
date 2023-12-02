@@ -54,7 +54,7 @@ const SideBar = () => {
         </SideBarItem>
         <SideBarItem
           text="Storage workers"
-          link="/storages_workers"
+          link="/storage_workers"
           isFull={open()}
         >
           <SmartToyIcon />

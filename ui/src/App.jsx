@@ -6,6 +6,7 @@ import BasicLayout from "./layouts/Basic";
 import Storages from "./pages/Storages";
 import StorageCreateForm from "./pages/Storages/StorageCreateForm";
 import AlertStack from "./components/AlertStack";
+import StorageWorkers from "./pages/StorageWorkers";
 
 const App = () => {
   return (
@@ -17,6 +18,7 @@ const App = () => {
           <Route path="/" component={Home} />
           <Route path="/storages" component={Storages} />
           <Route path="/storages/register" component={StorageCreateForm} />
+          <Route path="/storage_workers" component={StorageWorkers} />
         </Route>
       </Routes>
 

@@ -14,7 +14,7 @@ const API_BASE = "http://localhost:8080/api";
  * @param {any} body
  * @returns
  */
-const api_request = async (path, method, auth_token, body) => {
+const apiRequest = async (path, method, auth_token, body) => {
   const { addAlert } = alertStore;
 
   const fullpath = `${API_BASE}${path}`;
@@ -44,4 +44,4 @@ const api_request = async (path, method, auth_token, body) => {
   }
 };
 
-export default api_request;
+export default apiRequest;

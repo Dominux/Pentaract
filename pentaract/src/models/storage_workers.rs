@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 pub struct InStorageWorker {
     pub name: String,
     pub user_id: uuid::Uuid,
@@ -21,7 +23,7 @@ impl InStorageWorker {
     }
 }
 
-#[derive(Debug, sqlx::FromRow)]
+#[derive(Debug, sqlx::FromRow, Serialize)]
 pub struct StorageWorker {
     pub id: uuid::Uuid,
     pub name: String,
