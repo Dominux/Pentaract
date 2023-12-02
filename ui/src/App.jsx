@@ -7,6 +7,7 @@ import Storages from "./pages/Storages";
 import StorageCreateForm from "./pages/Storages/StorageCreateForm";
 import AlertStack from "./components/AlertStack";
 import StorageWorkers from "./pages/StorageWorkers";
+import StorageWorkerCreateForm from "./pages/StorageWorkers/StorageWorkerCreateForm";
 
 const App = () => {
   return (
@@ -19,6 +20,10 @@ const App = () => {
           <Route path="/storages" component={Storages} />
           <Route path="/storages/register" component={StorageCreateForm} />
           <Route path="/storage_workers" component={StorageWorkers} />
+          <Route
+            path="/storage_workers/register"
+            component={StorageWorkerCreateForm}
+          />
         </Route>
       </Routes>
 

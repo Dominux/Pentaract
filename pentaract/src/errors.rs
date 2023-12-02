@@ -44,14 +44,16 @@ pub enum PentaractError {
 impl From<PentaractError> for (StatusCode, String) {
     fn from(e: PentaractError) -> Self {
         match &e {
-            PentaractError::AlreadyExists(_) => (StatusCode::CONFLICT, e.to_string()),
-            PentaractError::StorageNameConflict => (StatusCode::CONFLICT, e.to_string()),
-            PentaractError::StorageChatIdConflict => (StatusCode::CONFLICT, e.to_string()),
+            PentaractError::AlreadyExists(_)
+            | PentaractError::StorageNameConflict
+            | PentaractError::StorageChatIdConflict
+            | PentaractError::StorageWorkerNameConflict
+            | PentaractError::StorageWorkerTokenConflict => (StatusCode::CONFLICT, e.to_string()),
             PentaractError::NotAuthenticated => (StatusCode::UNAUTHORIZED, e.to_string()),
             PentaractError::DoesNotExist(_) => (StatusCode::NOT_FOUND, e.to_string()),
-            PentaractError::HeaderMissed(_) => (StatusCode::BAD_REQUEST, e.to_string()),
-            PentaractError::HeaderIsInvalid(..) => (StatusCode::BAD_REQUEST, e.to_string()),
-            PentaractError::InvalidFolderName => (StatusCode::BAD_REQUEST, e.to_string()),
+            PentaractError::HeaderMissed(_)
+            | PentaractError::HeaderIsInvalid(..)
+            | PentaractError::InvalidFolderName => (StatusCode::BAD_REQUEST, e.to_string()),
             _ => {
                 tracing::error!("{e}");
                 (

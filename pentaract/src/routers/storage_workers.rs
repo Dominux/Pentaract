@@ -30,7 +30,7 @@ impl StorageWorkersRouter {
     async fn create(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
-        Form(in_schema): Form<InStorageWorkerSchema>,
+        Json(in_schema): Json<InStorageWorkerSchema>,
     ) -> impl IntoResponse {
         let sw = StorageWorkersService::new(&state.db)
             .create(in_schema, &user)

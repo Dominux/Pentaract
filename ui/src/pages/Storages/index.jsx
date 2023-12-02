@@ -24,8 +24,6 @@ const Storages = () => {
   onMount(async () => {
     const storagesSchema = await API.storages.listStorages();
     setStorages(storagesSchema.storages);
-
-    console.log(storages());
   });
 
   return (

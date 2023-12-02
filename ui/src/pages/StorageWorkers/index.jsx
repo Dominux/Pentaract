@@ -23,7 +23,7 @@ const StorageWorkers = () => {
 
   onMount(async () => {
     const storageWorkers = await API.storageWorkers.listStorageWorkers();
-    setStorages(storageWorkers);
+    setStorageWorkers(storageWorkers);
   });
 
   return (
@@ -34,7 +34,7 @@ const StorageWorkers = () => {
         </Grid>
         <Grid item xs={6} sx={{ display: "flex", justifyContent: "flex-end" }}>
           <Button
-            onClick={() => navigate("/storages/register")}
+            onClick={() => navigate("/storage_workers/register")}
             variant="contained"
             color="success"
           >
