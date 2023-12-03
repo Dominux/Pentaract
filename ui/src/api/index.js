@@ -1,6 +1,10 @@
 import createLocalStore from "../../libs";
 
-import apiRequest from "./request";
+import apiRequest, { apiMultipartRequest } from "./request";
+
+/////////////////////////////////////////////////////////////
+////  AUTH
+/////////////////////////////////////////////////////////////
 
 /**
  * @typedef {Object} TokenData
@@ -19,6 +23,10 @@ const login = async (username, password) => {
     password,
   });
 };
+
+/////////////////////////////////////////////////////////////
+////  STORAGES
+/////////////////////////////////////////////////////////////
 
 /**
  *
@@ -54,6 +62,18 @@ const listStorages = async () => {
 };
 
 /**
+ * @param {string} id
+ * @returns {Promise<Storage>}
+ */
+const getStorage = async (id) => {
+  return await apiRequest(`/storages/${id}`, "get", getAuthToken());
+};
+
+/////////////////////////////////////////////////////////////
+////  STORAGE WORKERS
+/////////////////////////////////////////////////////////////
+
+/**
  * @typedef {Object} StorageWorker
  * @property {string} id
  * @property {string} name
@@ -84,6 +104,87 @@ const listStorageWorkers = async () => {
   return await apiRequest("/storage_workers", "get", getAuthToken());
 };
 
+/////////////////////////////////////////////////////////////
+////  FILES
+/////////////////////////////////////////////////////////////
+
+/**
+ *
+ * @param {string} storage_id
+ * @param {string} path
+ * @returns
+ */
+const createFolder = async (storage_id, path) => {
+  return await apiRequest(
+    `/storages/${storage_id}/files/create_folder`,
+    "get",
+    { path }
+  );
+};
+
+/**
+ *
+ * @param {string} storage_id
+ * @param {string} path
+ * @param {string} file
+ * @returns
+ */
+const uploadFile = async (storage_id, path, file) => {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("path", path);
+
+  return await apiMultipartRequest(
+    `/storages/${storage_id}/files/upload`,
+    getAuthToken(),
+    form
+  );
+};
+
+/**
+ *
+ * @param {string} storage_id
+ * @param {string} path
+ * @param {string} file
+ * @returns
+ */
+const uploadFileTo = async (storage_id, path, file) => {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("path", path);
+
+  return await apiMultipartRequest(
+    `/storages/${storage_id}/files/upload_to`,
+    getAuthToken(),
+    form
+  );
+};
+
+/**
+ * @typedef {Object} FSElement
+ * @property {string} path
+ * @property {string} name
+ * @property {boolean} is_file
+ */
+
+/**
+ *
+ * @param {string} storage_id
+ * @param {string} path
+ * @returns {Promise<FSElement[]>}
+ */
+const getFSLayer = async (storage_id, path) => {
+  return await apiRequest(
+    `/storages/${storage_id}/files/tree/${path}`,
+    "get",
+    getAuthToken()
+  );
+};
+
+/////////////////////////////////////////////////////////////
+////  API
+/////////////////////////////////////////////////////////////
+
 const API = {
   auth: {
     login,
@@ -91,10 +192,17 @@ const API = {
   storages: {
     createStorage,
     listStorages,
+    getStorage,
   },
   storageWorkers: {
     createStorageWorker,
     listStorageWorkers,
+  },
+  files: {
+    createFolder,
+    uploadFile,
+    uploadFileTo,
+    getFSLayer,
   },
 };
 

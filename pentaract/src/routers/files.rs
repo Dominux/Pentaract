@@ -2,7 +2,7 @@ use std::{collections::HashMap, path::Path, sync::Arc};
 
 use axum::{
     body::Full,
-    extract::{DefaultBodyLimit, Multipart, Path as RoutePath, Query, State},
+    extract::{DefaultBodyLimit, Multipart, Path as RoutePath, State},
     http::{HeaderMap, StatusCode},
     middleware,
     response::{AppendHeaders, IntoResponse, Response},
@@ -19,12 +19,9 @@ use crate::{
         routing::{app_state::AppState, middlewares::auth::logged_in_required},
     },
     errors::{PentaractError, PentaractResult},
-    models::{
-        files::{FSElement, InFile},
-        storages::Storage,
-    },
+    models::files::InFile,
     schemas::files::{InFileSchema, InFolderSchema, UploadParams, IN_FILE_SCHEMA_FIELDS_AMOUNT},
-    services::{files::FilesService, storages::StoragesService},
+    services::files::FilesService,
 };
 
 const HX_PROMPT: &str = "HX-PROMPT";
@@ -71,49 +68,46 @@ impl FilesRouter {
         Ok(Json(fs_layer).into_response())
     }
 
-    #[inline]
-    async fn _list(
-        state: Arc<AppState>,
-        user: AuthUser,
-        storage_id: Uuid,
-        path: &str,
-    ) -> PentaractResult<(Storage, Vec<FSElement>)> {
-        let storage = StoragesService::new(&state.db)
-            .get(storage_id, &user)
-            .await?;
-        let fs_layer = vec![];
-
-        Ok((storage, fs_layer))
-    }
-
     async fn upload(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
-        Query(params): Query<UploadParams>,
         RoutePath(storage_id): RoutePath<Uuid>,
         mut multipart: Multipart,
-    ) -> Result<(), (StatusCode, String)> {
+    ) -> Result<StatusCode, (StatusCode, String)> {
         // parsing
-        let (filename, file) = match multipart.next_field().await.unwrap() {
-            Some(field) => (
-                field.file_name().unwrap_or("unnamed").to_owned(),
-                field.bytes().await.unwrap(),
-            ),
-            None => {
-                return Err((
-                    StatusCode::BAD_REQUEST,
-                    "file field is not presented".to_owned(),
-                ));
+        let (file, path) = {
+            let (mut file, mut filename, mut path) = (None, None, None);
+
+            // parsing
+            while let Some(field) = multipart.next_field().await.unwrap() {
+                let name = field.name().unwrap().to_owned();
+                let field_filename = field.file_name().unwrap_or("unnamed").to_owned();
+                let data = field.bytes().await.unwrap();
+
+                match name.as_str() {
+                    "file" => {
+                        file = Some(data);
+                        filename = Some(field_filename);
+                    }
+                    "path" => path = Some(String::from_utf8(data.to_vec()).unwrap()),
+                    // don't give a fuck about other fields
+                    _ => (),
+                }
             }
+
+            let file = file.ok_or((StatusCode::BAD_REQUEST, "file file is required".to_owned()))?;
+            let path = path
+                .ok_or((StatusCode::BAD_REQUEST, "path file is required".to_owned()))
+                .map(|path| Self::construct_path(&path, &filename.unwrap()))??;
+            (file, path)
         };
-        let path = Self::construct_path(&params.path, &filename)?;
         let size = file.len() as i64;
         let in_file = InFile::new(path, size, storage_id);
 
         FilesService::new(&state.db, state.tx.clone())
             .upload_anyway(in_file, file, &user)
             .await?;
-        Ok(())
+        Ok(StatusCode::CREATED)
     }
 
     async fn upload_to(
@@ -121,7 +115,7 @@ impl FilesRouter {
         Extension(user): Extension<AuthUser>,
         RoutePath(storage_id): RoutePath<Uuid>,
         mut multipart: Multipart,
-    ) -> Result<(), (StatusCode, String)> {
+    ) -> Result<StatusCode, (StatusCode, String)> {
         // parsing and validating schema
         let in_schema = {
             let mut body_parts = HashMap::with_capacity(IN_FILE_SCHEMA_FIELDS_AMOUNT);
@@ -152,16 +146,16 @@ impl FilesRouter {
             .upload_to(in_schema, &user)
             .await?;
 
-        Ok(())
+        Ok(StatusCode::CREATED)
     }
 
     async fn create_folder(
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
-        Query(params): Query<UploadParams>,
         RoutePath(storage_id): RoutePath<Uuid>,
         headers: HeaderMap,
-    ) -> Result<(), (StatusCode, String)> {
+        Json(params): Json<UploadParams>,
+    ) -> Result<StatusCode, (StatusCode, String)> {
         let in_schema = {
             // parsing folder name
             let folder_name = headers
@@ -179,7 +173,7 @@ impl FilesRouter {
         FilesService::new(&state.db, state.tx.clone())
             .create_folder(in_schema, &user)
             .await?;
-        Ok(())
+        Ok(StatusCode::CREATED)
     }
 
     #[inline]

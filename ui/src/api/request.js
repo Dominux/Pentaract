@@ -44,4 +44,41 @@ const apiRequest = async (path, method, auth_token, body) => {
   }
 };
 
+/**
+ *
+ * @param {string} path
+ * @param {string | null | undefined} auth_token
+ * @param {FormData} form
+ * @returns
+ */
+export const apiMultipartRequest = async (path, auth_token, form) => {
+  const { addAlert } = alertStore;
+
+  const fullpath = `${API_BASE}${path}`;
+
+  const headers = new Headers();
+  headers.append("Content-Type", "multipart/form-data");
+  if (auth_token) {
+    headers.append("Authorization", auth_token);
+  }
+
+  try {
+    const response = await fetch(fullpath, {
+      method,
+      body: form,
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    return await response.json();
+  } catch (err) {
+    addAlert(err.message, "error");
+
+    throw err;
+  }
+};
+
 export default apiRequest;
