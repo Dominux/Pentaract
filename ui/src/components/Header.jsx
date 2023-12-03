@@ -25,7 +25,7 @@ const Header = () => {
         </Typography>
 
         <IconButton onClick={logout}>
-          <LogoutIcon />
+          <LogoutIcon sx={{ color: "white" }} />
         </IconButton>
       </Toolbar>
     </AppBar>

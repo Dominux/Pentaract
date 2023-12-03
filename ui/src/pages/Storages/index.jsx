@@ -10,7 +10,7 @@ import TableHead from "@suid/material/TableHead";
 import TableRow from "@suid/material/TableRow";
 import Button from "@suid/material/Button";
 import { Show, createSignal, mapArray, onMount } from "solid-js";
-import { useNavigate } from "@solidjs/router";
+import { A, useNavigate } from "@solidjs/router";
 
 import API from "../../api";
 
@@ -60,16 +60,18 @@ const Storages = () => {
               </TableHead>
               <TableBody>
                 {mapArray(storages, (storage) => (
-                  <TableRow
-                    sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                  >
-                    <TableCell component="th" scope="row">
-                      {storage.name}
-                    </TableCell>
-                    <TableCell>{storage.chat_id}</TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
+                  <A href={`/storages/${storage.id}`}>
+                    <TableRow
+                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {storage.id}
+                      </TableCell>
+                      <TableCell>{storage.chat_id}</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </A>
                 ))}
               </TableBody>
             </Show>
