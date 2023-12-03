@@ -29,8 +29,4 @@ impl AuthRouter {
         let schema = TokenSchema::new(token);
         Ok::<_, (StatusCode, String)>((StatusCode::OK, Json(schema)))
     }
-
-    pub async fn logout_for_htmx() -> impl IntoResponse {
-        todo!()
-    }
 }

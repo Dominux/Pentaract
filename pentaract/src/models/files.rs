@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 pub struct InFile {
     pub path: String,
     pub size: i64,
@@ -47,7 +49,7 @@ pub struct DBFSElement {
     pub is_file: bool,
 }
 
-#[derive(Debug, sqlx::FromRow)]
+#[derive(Debug, sqlx::FromRow, Serialize)]
 pub struct FSElement {
     pub path: String,
     pub name: String,

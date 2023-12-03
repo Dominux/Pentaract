@@ -25,7 +25,6 @@ mod schemas;
 mod server;
 mod services;
 mod storage_manager;
-mod templates;
 
 #[tokio::main]
 async fn main() {

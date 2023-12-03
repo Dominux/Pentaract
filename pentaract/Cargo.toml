@@ -16,7 +16,6 @@ tower-http = { version = "0.4.4", features = ["trace", "cors"], default_features
 
 # serialization/deserialization
 serde = { version = "1.0.189", features = ["derive"] }
-askama = "0.12.1"
 
 # auth
 pwhash = "1.0.0"
