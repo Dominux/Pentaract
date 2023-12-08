@@ -1,15 +1,34 @@
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
-import { createSignal } from "solid-js";
+import Button from "@suid/material/Button";
+import TextField from "@suid/material/TextField";
+import Dialog from "@suid/material/Dialog";
+import DialogActions from "@suid/material/DialogActions";
+import DialogContent from "@suid/material/DialogContent";
+import DialogTitle from "@suid/material/DialogTitle";
+import { createEffect, createSignal } from "solid-js";
 
-const CreateFolderDialog = () => {
-  const [open, setOpen] = createSignal(false);
+/**
+ * @typedef {Object} CreateFolderDialogProps
+ * @property {boolean} isOpened
+ * @property {(folderName: string) => Promise<void>} onCreate
+ * @property {() => void} onClose
+ */
+
+/**
+ *
+ * @param {CreateFolderDialogProps} props
+ * @returns
+ */
+const CreateFolderDialog = (props) => {
   const [errFolderName, setErrFolderName] = createSignal(null);
+  const [folderName, setFolderName] = createSignal("");
+
+  let folderNameElement;
+
+  createEffect(() => {
+    if (props.isOpened) {
+      setTimeout(() => folderNameElement.querySelector("input").focus(), 200);
+    }
+  });
 
   /**
    *
@@ -26,27 +45,30 @@ const CreateFolderDialog = () => {
     setErrFolderName(
       value.includes("/") ? 'Folder name cannot have a "/" symbol' : null
     );
+
+    setFolderName(value);
   };
 
-  const handleClickOpen = () => {
-    setOpen(true);
+  const onClose = () => {
+    setErrFolderName(null);
+    setFolderName("");
+    props.onClose();
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  const onCreate = async () => {
+    const foldeName = folderName();
+    onClose();
+    await props.onCreate(foldeName);
   };
 
   return (
     <>
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Subscribe</DialogTitle>
+      <Dialog open={props.isOpened} onClose={onClose}>
+        <DialogTitle>Create folder</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            To subscribe to this website, please enter your email address here.
-            We will send updates occasionally.
-          </DialogContentText>
           <TextField
-            autoFocus
+            ref={folderNameElement}
+            value={folderName()}
             required
             margin="dense"
             id="folder-name"
@@ -59,7 +81,16 @@ const CreateFolderDialog = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Create</Button>
+          <Button
+            onClick={onCreate}
+            color="success"
+            disabled={!folderName().length || errFolderName()}
+          >
+            Create
+          </Button>
+          <Button onClick={onClose} color="error">
+            Cancel
+          </Button>
         </DialogActions>
       </Dialog>
     </>

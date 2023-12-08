@@ -7,6 +7,7 @@ use crate::common::types::Position;
 #[derive(Deserialize)]
 pub struct UploadParams {
     pub path: String,
+    pub folder_name: String,
 }
 
 pub struct InFileSchema {

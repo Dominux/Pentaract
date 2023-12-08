@@ -14,17 +14,18 @@ import { Divider } from "@suid/material";
 import API from "../../api";
 import FSListItem from "../../components/FSListItem";
 import Menu from "../../components/Menu";
+import CreateFolderDialog from "../../components/CreateFolderDialog";
 
 const Files = () => {
   /**
    * @type {[import("solid-js").Accessor<import("../../api").FSElement[]>, any]}
    */
   const [fsLayer, setFsLayer] = createSignal([]);
+  const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] =
+    createSignal(false);
   const params = useParams();
 
   const fetchFSLayer = async () => {
-    console.log(params.path);
-
     const fsLayerRes = await API.files.getFSLayer(params.id, params.path);
 
     if (params.path.length) {
@@ -45,50 +46,82 @@ const Files = () => {
     }
   });
 
-  return (
-    <Stack container>
-      <Grid container sx={{ mb: 2 }}>
-        <Grid item xs={6}>
-          <Typography variant="h4">Files</Typography>
-        </Grid>
-        <Grid item xs={6} sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Menu button_title="Create">
-            <MenuItem>
-              <ListItemIcon>
-                <UploadFolderIcon />
-              </ListItemIcon>
-              <ListItemText>Create folder</ListItemText>
-            </MenuItem>
-            <MenuItem>
-              <ListItemIcon>
-                <UploadFileIcon />
-              </ListItemIcon>
-              <ListItemText>Upload file</ListItemText>
-            </MenuItem>
-            <MenuItem>
-              <ListItemIcon>
-                <UploadFileIcon />
-              </ListItemIcon>
-              <ListItemText>Upload file to</ListItemText>
-            </MenuItem>
-          </Menu>
-        </Grid>
-      </Grid>
+  const openCreateFolderDialog = () => {
+    setIsCreateFolderDialogOpen(true);
+  };
+  const closeCreateFolderDialog = () => {
+    setIsCreateFolderDialogOpen(false);
+  };
 
-      <Grid>
-        <Show when={fsLayer().length} fallback={<>Not files yet</>}>
-          <List sx={{ minWidth: 320, maxWidth: 540, mx: "auto" }}>
-            <Divider />
-            {mapArray(fsLayer, (fsElement) => (
-              <>
-                <FSListItem fsElement={fsElement} storageId={params.id} />
-                <Divider />
-              </>
-            ))}
-          </List>
-        </Show>
-      </Grid>
-    </Stack>
+  /**
+   *
+   * @param {string} folderName
+   */
+  const createFolder = async (folderName) => {
+    const basePath = params.path.endsWith("/")
+      ? params.path.slice(0, -1)
+      : params.path;
+
+    await API.files.createFolder(params.id, basePath, folderName);
+    await fetchFSLayer();
+  };
+
+  return (
+    <>
+      <Stack container>
+        <Grid container sx={{ mb: 2 }}>
+          <Grid item xs={6}>
+            <Typography variant="h4">Files</Typography>
+          </Grid>
+          <Grid
+            item
+            xs={6}
+            sx={{ display: "flex", justifyContent: "flex-end" }}
+          >
+            <Menu button_title="Create">
+              <MenuItem onClick={openCreateFolderDialog}>
+                <ListItemIcon>
+                  <UploadFolderIcon />
+                </ListItemIcon>
+                <ListItemText>Create folder</ListItemText>
+              </MenuItem>
+              <MenuItem>
+                <ListItemIcon>
+                  <UploadFileIcon />
+                </ListItemIcon>
+                <ListItemText>Upload file</ListItemText>
+              </MenuItem>
+              <MenuItem>
+                <ListItemIcon>
+                  <UploadFileIcon />
+                </ListItemIcon>
+                <ListItemText>Upload file to</ListItemText>
+              </MenuItem>
+            </Menu>
+          </Grid>
+        </Grid>
+
+        <Grid>
+          <Show when={fsLayer().length} fallback={<>Not files yet</>}>
+            <List sx={{ minWidth: 320, maxWidth: 540, mx: "auto" }}>
+              <Divider />
+              {mapArray(fsLayer, (fsElement) => (
+                <>
+                  <FSListItem fsElement={fsElement} storageId={params.id} />
+                  <Divider />
+                </>
+              ))}
+            </List>
+          </Show>
+        </Grid>
+      </Stack>
+
+      <CreateFolderDialog
+        isOpened={isCreateFolderDialogOpen()}
+        onCreate={createFolder}
+        onClose={closeCreateFolderDialog}
+      />
+    </>
   );
 };
 

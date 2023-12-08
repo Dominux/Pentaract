@@ -24,8 +24,6 @@ use crate::{
     services::files::FilesService,
 };
 
-const HX_PROMPT: &str = "HX-PROMPT";
-
 pub struct FilesRouter;
 
 impl FilesRouter {
@@ -153,22 +151,9 @@ impl FilesRouter {
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
         RoutePath(storage_id): RoutePath<Uuid>,
-        headers: HeaderMap,
         Json(params): Json<UploadParams>,
     ) -> Result<StatusCode, (StatusCode, String)> {
-        let in_schema = {
-            // parsing folder name
-            let folder_name = headers
-                .get(HX_PROMPT)
-                .ok_or(PentaractError::HeaderMissed(HX_PROMPT.to_owned()))?
-                .to_str()
-                .map_err(|_| {
-                    PentaractError::HeaderIsInvalid(HX_PROMPT.to_owned(), "UTF-8 string".to_owned())
-                })?
-                .to_owned();
-
-            InFolderSchema::new(storage_id, params.path, folder_name)
-        };
+        let in_schema = InFolderSchema::new(storage_id, params.path, params.folder_name);
 
         FilesService::new(&state.db, state.tx.clone())
             .create_folder(in_schema, &user)

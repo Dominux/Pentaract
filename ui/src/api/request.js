@@ -36,7 +36,9 @@ const apiRequest = async (path, method, auth_token, body) => {
       throw new Error(await response.text());
     }
 
-    return await response.json();
+    try {
+      return await response.json();
+    } catch {}
   } catch (err) {
     addAlert(err.message, "error");
 

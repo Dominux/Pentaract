@@ -112,13 +112,15 @@ const listStorageWorkers = async () => {
  *
  * @param {string} storage_id
  * @param {string} path
+ * @param {string} folderName
  * @returns
  */
-const createFolder = async (storage_id, path) => {
+const createFolder = async (storage_id, path, folderName) => {
   return await apiRequest(
     `/storages/${storage_id}/files/create_folder`,
-    "get",
-    { path }
+    "post",
+    getAuthToken(),
+    { path, folder_name: folderName }
   );
 };
 
