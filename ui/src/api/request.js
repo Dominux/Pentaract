@@ -59,14 +59,14 @@ export const apiMultipartRequest = async (path, auth_token, form) => {
   const fullpath = `${API_BASE}${path}`;
 
   const headers = new Headers();
-  headers.append("Content-Type", "multipart/form-data");
+  // headers.append("Content-Type", "multipart/form-data");
   if (auth_token) {
     headers.append("Authorization", auth_token);
   }
 
   try {
     const response = await fetch(fullpath, {
-      method,
+      method: "post",
       body: form,
       headers,
     });
@@ -75,7 +75,9 @@ export const apiMultipartRequest = async (path, auth_token, form) => {
       throw new Error(await response.text());
     }
 
-    return await response.json();
+    try {
+      return await response.json();
+    } catch {}
   } catch (err) {
     addAlert(err.message, "error");
 

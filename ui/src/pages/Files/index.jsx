@@ -25,6 +25,8 @@ const Files = () => {
     createSignal(false);
   const params = useParams();
 
+  let uploadFileInputElement;
+
   const fetchFSLayer = async (path = params.path) => {
     const fsLayerRes = await API.files.getFSLayer(params.id, path);
 
@@ -74,6 +76,15 @@ const Files = () => {
     await fetchFSLayer();
   };
 
+  const uploadFileClickHandler = () => {
+    uploadFileInputElement.click();
+  };
+
+  const uploadFile = async (event) => {
+    await API.files.uploadFile(params.id, params.path, event.target.files[0]);
+    await fetchFSLayer();
+  };
+
   return (
     <>
       <Stack container>
@@ -93,7 +104,7 @@ const Files = () => {
                 </ListItemIcon>
                 <ListItemText>Create folder</ListItemText>
               </MenuItem>
-              <MenuItem>
+              <MenuItem onClick={uploadFileClickHandler}>
                 <ListItemIcon>
                   <UploadFileIcon />
                 </ListItemIcon>
@@ -128,6 +139,12 @@ const Files = () => {
         isOpened={isCreateFolderDialogOpen()}
         onCreate={createFolder}
         onClose={closeCreateFolderDialog}
+      />
+      <input
+        ref={uploadFileInputElement}
+        type="file"
+        style="display: none"
+        onChange={uploadFile}
       />
     </>
   );
