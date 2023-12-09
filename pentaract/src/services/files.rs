@@ -103,7 +103,7 @@ impl<'d> FilesService<'d> {
             StorageManagerData::UploadFile(r) => r,
             _ => unimplemented!(),
         };
-        if let Err(e) = message_back.or({
+        if let Err(e) = message_back.and({
             tracing::debug!("file loaded successfully");
 
             // 4. setting file as uploaded

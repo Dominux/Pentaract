@@ -12,9 +12,16 @@ const API_BASE = "http://localhost:8080/api";
  * @param {Method} method
  * @param {string | null | undefined} auth_token
  * @param {any} body
+ * @param {boolean} return_response
  * @returns
  */
-const apiRequest = async (path, method, auth_token, body) => {
+const apiRequest = async (
+  path,
+  method,
+  auth_token,
+  body,
+  return_response = false
+) => {
   const { addAlert } = alertStore;
 
   const fullpath = `${API_BASE}${path}`;
@@ -34,6 +41,10 @@ const apiRequest = async (path, method, auth_token, body) => {
 
     if (!response.ok) {
       throw new Error(await response.text());
+    }
+
+    if (return_response) {
+      return response;
     }
 
     try {

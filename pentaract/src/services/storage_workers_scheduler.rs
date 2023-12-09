@@ -26,6 +26,9 @@ impl<'d> StorageWorkersScheduler<'d> {
             };
 
             // waiting for a while
+            tracing::debug!(
+                "[TELEGRAM API] waiting for getting a token for a storage with id \"{storage_id}\"",
+            );
             sleep(Duration::from_secs(1)).await;
         }
     }

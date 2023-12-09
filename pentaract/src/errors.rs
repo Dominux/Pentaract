@@ -25,7 +25,7 @@ pub enum PentaractError {
     StorageWorkerTokenConflict,
     #[error("not authenticated")]
     NotAuthenticated,
-    #[error("Telegram API error: `{0}`")]
+    #[error("[Telegram API] {0}")]
     TelegramAPIError(String),
     #[error("You need to add at least 1 storage worker")]
     NoStorageWorkers,

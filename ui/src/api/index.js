@@ -183,6 +183,24 @@ const getFSLayer = async (storage_id, path) => {
   );
 };
 
+/**
+ *
+ * @param {string} storage_id
+ * @param {string} path
+ * @returns {Promise<FSElement[]>}
+ */
+const download = async (storage_id, path) => {
+  const response = await apiRequest(
+    `/storages/${storage_id}/files/download/${path}`,
+    "get",
+    getAuthToken(),
+    undefined,
+    true
+  );
+
+  return await response.blob();
+};
+
 /////////////////////////////////////////////////////////////
 ////  API
 /////////////////////////////////////////////////////////////
@@ -205,6 +223,7 @@ const API = {
     uploadFile,
     uploadFileTo,
     getFSLayer,
+    download,
   },
 };
 

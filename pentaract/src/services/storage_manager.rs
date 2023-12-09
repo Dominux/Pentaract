@@ -58,6 +58,7 @@ impl<'d> StorageManagerService<'d> {
                 )
             })
             .collect();
+
         let chunks = join_all(futures_)
             .await
             .into_iter()
