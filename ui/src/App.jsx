@@ -9,6 +9,7 @@ import AlertStack from "./components/AlertStack";
 import StorageWorkers from "./pages/StorageWorkers";
 import StorageWorkerCreateForm from "./pages/StorageWorkers/StorageWorkerCreateForm";
 import Files from "./pages/Files";
+import UploadFileTo from "./pages/Files/UploadFileTo";
 
 const App = () => {
   return (
@@ -20,7 +21,8 @@ const App = () => {
           <Route path="/" component={Home} />
           <Route path="/storages" component={Storages} />
           <Route path="/storages/register" component={StorageCreateForm} />
-          <Route path="/storages/:id/*path" component={Files} />
+          <Route path="/storages/:id/files/*path" component={Files} />
+          <Route path="/storages/:id/upload_to" component={UploadFileTo} />
           <Route path="/storage_workers" component={StorageWorkers} />
           <Route
             path="/storage_workers/register"

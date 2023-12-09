@@ -1,4 +1,4 @@
-import { useBeforeLeave, useParams } from "@solidjs/router";
+import { useBeforeLeave, useNavigate, useParams } from "@solidjs/router";
 import { Show, createSignal, mapArray, onMount } from "solid-js";
 import List from "@suid/material/List";
 import MenuItem from "@suid/material/MenuItem";
@@ -15,14 +15,17 @@ import API from "../../api";
 import FSListItem from "../../components/FSListItem";
 import Menu from "../../components/Menu";
 import CreateFolderDialog from "../../components/CreateFolderDialog";
+import { alertStore } from "../../components/AlertStack";
 
 const Files = () => {
+  const { addAlert } = alertStore;
   /**
    * @type {[import("solid-js").Accessor<import("../../api").FSElement[]>, any]}
    */
   const [fsLayer, setFsLayer] = createSignal([]);
   const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] =
     createSignal(false);
+  const navigate = useNavigate();
   const params = useParams();
 
   let uploadFileInputElement;
@@ -43,7 +46,7 @@ const Files = () => {
   onMount(fetchFSLayer);
 
   useBeforeLeave(async (e) => {
-    const basePath = `/storages/${params.id}`;
+    const basePath = `/storages/${params.id}/files`;
     if (e.to.startsWith(basePath)) {
       let newPath = e.to.slice(basePath.length);
 
@@ -73,6 +76,7 @@ const Files = () => {
       : params.path;
 
     await API.files.createFolder(params.id, basePath, folderName);
+    addAlert(`Created folder "${folderName}"`, "success");
     await fetchFSLayer();
   };
 
@@ -90,7 +94,8 @@ const Files = () => {
       return;
     }
 
-    await API.files.uploadFile(params.id, params.path, event.target.files[0]);
+    await API.files.uploadFile(params.id, params.path, file);
+    addAlert(`Uploaded file "${file.name}"`, "success");
     await fetchFSLayer();
   };
 
@@ -119,7 +124,9 @@ const Files = () => {
                 </ListItemIcon>
                 <ListItemText>Upload file</ListItemText>
               </MenuItem>
-              <MenuItem>
+              <MenuItem
+                onClick={() => navigate(`/storages/${params.id}/upload_to`)}
+              >
                 <ListItemIcon>
                   <UploadFileIcon />
                 </ListItemIcon>

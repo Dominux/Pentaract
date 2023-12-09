@@ -44,7 +44,7 @@ const FSListItem = (props) => {
       when={!props.fsElement.is_file}
       fallback={fsListItem(props.fsElement)}
     >
-      <A href={`/storages/${props.storageId}/${props.fsElement.path}`}>
+      <A href={`/storages/${props.storageId}/files/${props.fsElement.path}`}>
         {fsListItem(props.fsElement)}
       </A>
     </Show>

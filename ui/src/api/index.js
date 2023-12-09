@@ -128,7 +128,7 @@ const createFolder = async (storage_id, path, folderName) => {
  *
  * @param {string} storage_id
  * @param {string} path
- * @param {string} file
+ * @param {any} file
  * @returns
  */
 const uploadFile = async (storage_id, path, file) => {
@@ -147,7 +147,7 @@ const uploadFile = async (storage_id, path, file) => {
  *
  * @param {string} storage_id
  * @param {string} path
- * @param {string} file
+ * @param {any} file
  * @returns
  */
 const uploadFileTo = async (storage_id, path, file) => {

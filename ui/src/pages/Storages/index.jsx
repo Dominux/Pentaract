@@ -60,18 +60,20 @@ const Storages = () => {
               </TableHead>
               <TableBody>
                 {mapArray(storages, (storage) => (
-                  <A href={`/storages/${storage.id}`}>
-                    <TableRow
-                      sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                    >
-                      <TableCell component="th" scope="row">
-                        {storage.id}
-                      </TableCell>
-                      <TableCell>{storage.chat_id}</TableCell>
-                      <TableCell></TableCell>
-                      <TableCell></TableCell>
-                    </TableRow>
-                  </A>
+                  <TableRow
+                    onClick={() => navigate(`/storages/${storage.id}/files`)}
+                    sx={{
+                      cursor: "pointer",
+                      "&:last-child td, &:last-child th": { border: 0 },
+                    }}
+                  >
+                    <TableCell component="th" scope="row">
+                      {storage.id}
+                    </TableCell>
+                    <TableCell>{storage.chat_id}</TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
             </Show>
