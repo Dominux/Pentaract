@@ -80,7 +80,16 @@ const Files = () => {
     uploadFileInputElement.click();
   };
 
+  /**
+   *
+   * @param {Event} event
+   */
   const uploadFile = async (event) => {
+    const file = event.target.files[0];
+    if (file === undefined) {
+      return;
+    }
+
     await API.files.uploadFile(params.id, params.path, event.target.files[0]);
     await fetchFSLayer();
   };
