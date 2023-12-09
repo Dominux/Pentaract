@@ -9,14 +9,18 @@ import FileIcon from "@suid/icons-material/InsertDriveFileOutlined";
 import FolderIcon from "@suid/icons-material/Folder";
 import MoreVertIcon from "@suid/icons-material/MoreVert";
 import DownloadIcon from "@suid/icons-material/Download";
+import DeleteIcon from "@suid/icons-material/Delete";
 import { createSignal } from "solid-js";
 import { useNavigate, useParams } from "@solidjs/router";
+
 import API from "../api";
+import DeleteConfirmDialog from "./DeleteConfirmDialog";
 
 /**
  * @typedef {Object} FSListItemProps
  * @property {import("../api").FSElement} fsElement
  * @property {string} storageId
+ * @property {() => {}} onDelete
  */
 
 /**
@@ -26,6 +30,8 @@ import API from "../api";
  */
 const FSListItem = (props) => {
   const [moreAnchorEl, setMoreAnchorEl] = createSignal(null);
+  const [isDeleteConfirmDialogOpened, setIsDeleteConfirmDialogOpened] =
+    createSignal(false);
   const navigate = useNavigate();
   const params = useParams();
 
@@ -57,6 +63,20 @@ const FSListItem = (props) => {
     a.remove();
   };
 
+  const openDeleteConfirmDialog = () => {
+    handleCloseMore();
+    setIsDeleteConfirmDialogOpened(true);
+  };
+  const closeDeleteConfirmDialog = () => {
+    setIsDeleteConfirmDialogOpened(false);
+  };
+
+  const deleteFile = async () => {
+    closeDeleteConfirmDialog();
+    await API.files.deleteFile(params.id, props.fsElement.path);
+    props.onDelete();
+  };
+
   return (
     <>
       <ListItem disablePadding>
@@ -85,11 +105,26 @@ const FSListItem = (props) => {
       >
         <MenuItem onClick={download} disabled={!props.fsElement.is_file}>
           <ListItemIcon>
-            <DownloadIcon />
+            <DownloadIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Download</ListItemText>
         </MenuItem>
+
+        <MenuItem onClick={openDeleteConfirmDialog}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
       </MenuMUI>
+
+      <DeleteConfirmDialog
+        entity="file"
+        entityId={props.fsElement.name}
+        isOpened={isDeleteConfirmDialogOpened()}
+        onConfirm={deleteFile}
+        onCancel={closeDeleteConfirmDialog}
+      />
     </>
   );
 };

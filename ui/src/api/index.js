@@ -187,7 +187,7 @@ const getFSLayer = async (storage_id, path) => {
  *
  * @param {string} storage_id
  * @param {string} path
- * @returns {Promise<FSElement[]>}
+ * @returns {Promise<Blob>}
  */
 const download = async (storage_id, path) => {
   const response = await apiRequest(
@@ -199,6 +199,19 @@ const download = async (storage_id, path) => {
   );
 
   return await response.blob();
+};
+
+/**
+ *
+ * @param {string} storage_id
+ * @param {string} path
+ */
+const deleteFile = async (storage_id, path) => {
+  await apiRequest(
+    `/storages/${storage_id}/files/${path}`,
+    "delete",
+    getAuthToken()
+  );
 };
 
 /////////////////////////////////////////////////////////////
@@ -224,6 +237,7 @@ const API = {
     uploadFileTo,
     getFSLayer,
     download,
+    deleteFile,
   },
 };
 

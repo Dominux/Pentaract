@@ -142,7 +142,11 @@ const Files = () => {
               <Divider />
               {mapArray(fsLayer, (fsElement) => (
                 <>
-                  <FSListItem fsElement={fsElement} storageId={params.id} />
+                  <FSListItem
+                    fsElement={fsElement}
+                    storageId={params.id}
+                    onDelete={fetchFSLayer}
+                  />
                   <Divider />
                 </>
               ))}
