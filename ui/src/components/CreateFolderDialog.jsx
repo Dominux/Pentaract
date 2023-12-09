@@ -64,34 +64,36 @@ const CreateFolderDialog = (props) => {
   return (
     <>
       <Dialog open={props.isOpened} onClose={onClose}>
-        <DialogTitle>Create folder</DialogTitle>
-        <DialogContent>
-          <TextField
-            ref={folderNameElement}
-            value={folderName()}
-            required
-            margin="dense"
-            id="folder-name"
-            label="New folder name"
-            onChange={validateFolderName}
-            helperText={errFolderName}
-            error={errFolderName() !== null}
-            fullWidth
-            variant="standard"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={onCreate}
-            color="success"
-            disabled={!folderName().length || errFolderName()}
-          >
-            Create
-          </Button>
-          <Button onClick={onClose} color="error">
-            Cancel
-          </Button>
-        </DialogActions>
+        <form onSubmit={onCreate}>
+          <DialogTitle>Create folder</DialogTitle>
+          <DialogContent>
+            <TextField
+              ref={folderNameElement}
+              value={folderName()}
+              required
+              margin="dense"
+              id="folder-name"
+              label="New folder name"
+              onChange={validateFolderName}
+              helperText={errFolderName}
+              error={errFolderName() !== null}
+              fullWidth
+              variant="standard"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              type="submit"
+              color="success"
+              disabled={!folderName().length || errFolderName()}
+            >
+              Create
+            </Button>
+            <Button onClick={onClose} color="error">
+              Cancel
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
     </>
   );

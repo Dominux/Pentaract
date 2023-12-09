@@ -42,7 +42,11 @@ impl<'d> FilesService<'d> {
         }
 
         // 1. constructing final values
-        let path = format!("{}/{}/", in_schema.parent_path, in_schema.folder_name);
+        let path = if !in_schema.parent_path.is_empty() {
+            format!("{}/{}/", in_schema.parent_path, in_schema.folder_name)
+        } else {
+            format!("{}/", in_schema.folder_name)
+        };
         let in_file = InFile::new(path, 0, in_schema.storage_id);
 
         // 2. saving to db

@@ -25,11 +25,11 @@ const Files = () => {
     createSignal(false);
   const params = useParams();
 
-  const fetchFSLayer = async () => {
-    const fsLayerRes = await API.files.getFSLayer(params.id, params.path);
+  const fetchFSLayer = async (path = params.path) => {
+    const fsLayerRes = await API.files.getFSLayer(params.id, path);
 
-    if (params.path.length) {
-      const parentPath = params.path.split("/").slice(0, -1).join("/");
+    if (path.length) {
+      const parentPath = path.split("/").slice(0, -1).join("/");
       const backToParent = { is_file: false, name: "..", path: parentPath };
 
       fsLayerRes.splice(0, 0, backToParent);
@@ -40,9 +40,17 @@ const Files = () => {
 
   onMount(fetchFSLayer);
 
-  useBeforeLeave((e) => {
-    if (e.to.startsWith(`/storages/${params.id}`)) {
-      e.retry(true);
+  useBeforeLeave(async (e) => {
+    const basePath = `/storages/${params.id}`;
+    if (e.to.startsWith(basePath)) {
+      let newPath = e.to.slice(basePath.length);
+
+      if (newPath.startsWith("/")) {
+        newPath = newPath.slice(1);
+      }
+
+      console.log(newPath);
+      await fetchFSLayer(newPath);
     }
   });
 
