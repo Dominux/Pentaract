@@ -51,3 +51,27 @@ CREATE TABLE storage_workers_usages (
                                           ON UPDATE CASCADE,
     dt                 TIMESTAMP DEFAULT NOW()
 );
+
+CREATE OR REPLACE FUNCTION public.regexp_quote(IN TEXT)
+    RETURNS TEXT
+    LANGUAGE plpgsql
+    STABLE
+AS $$
+    /*******************************************************************************
+    * Function Name: regexp_quote
+    * In-coming Param:
+    *   The string to decoded and convert into a set of text arrays.
+    * Returns:
+    *   This function produces a TEXT that can be used as a regular expression
+    *   pattern that would match the input as if it were a literal pattern.
+    * Description:
+    *   Takes in a TEXT in and escapes all of the necessary characters so that
+    *   the output can be used as a regular expression to match the input as if
+    *   it were a literal pattern.
+    * Source: https://cwestblog.com/2012/07/10/postgresql-escape-regular-expressions/ * 
+    *     The original one doesn't work anymore.
+    ******************************************************************************/
+BEGIN
+    RETURN REGEXP_REPLACE($1, '([\.\+\*\?\^\$\(\)\[\]\{\}\|\\])', '\\\1', 'g');
+END;
+$$;

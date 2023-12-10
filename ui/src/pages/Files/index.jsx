@@ -54,7 +54,6 @@ const Files = () => {
         newPath = newPath.slice(1);
       }
 
-      console.log(newPath);
       await fetchFSLayer(newPath);
     }
   });

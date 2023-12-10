@@ -94,7 +94,7 @@ impl<'d> FilesRepository<'d> {
                 WITH f AS (
                     SELECT path
                     FROM {FILES_TABLE}
-                    WHERE storage_id = $3 AND path ~ ('^(' || $1 || $2 || '|' || $1 || ' \(\d+\)' || $2 || ')$')
+                    WHERE storage_id = $3 AND path ~ ('^(' || regexp_quote($1) || regexp_quote($2) || '|' || regexp_quote($1) || ' \(\d+\)' || regexp_quote($2) || ')$')
                     ORDER BY path DESC
                 )
                 SELECT 
@@ -307,11 +307,19 @@ impl<'d> FilesRepository<'d> {
     pub async fn delete(&self, path: &str, storage_id: Uuid) -> PentaractResult<()> {
         let mut transaction = self.db.begin().await.map_err(|e| map_not_found(e, ""))?;
 
+        let where_path = if path.ends_with("/") {
+            // for folders
+            "LIKE $2 || '%'"
+        } else {
+            // for files
+            "= $2"
+        };
+
         // deleting file
         sqlx::query(&format!(
             "
             DELETE FROM {FILES_TABLE} 
-            WHERE storage_id = $1 AND path LIKE $2 || '%';
+            WHERE storage_id = $1 AND path {where_path};
             "
         ))
         .bind(storage_id)
