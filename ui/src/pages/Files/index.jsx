@@ -94,6 +94,8 @@ const Files = () => {
       return;
     }
 
+    event.target.value = null;
+
     await API.files.uploadFile(params.id, params.path, file);
     addAlert(`Uploaded file "${file.name}"`, "success");
     await fetchFSLayer();

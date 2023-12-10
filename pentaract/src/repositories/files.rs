@@ -68,7 +68,23 @@ impl<'d> FilesRepository<'d> {
     /// Creates a file even if the given path already exists
     pub async fn create_file_anyway(&self, in_obj: InFile) -> PentaractResult<File> {
         let id = Uuid::new_v4();
-        let chars_to_skip = in_obj.path.len() + 3; // if the name is `kek` then it's gonna be a len of `kek (` + 1
+
+        // lol/kek/sdf.nj.dskf/sdkl.fdsklf/lol .kek.dsf
+        let (path_with_stem, suffix) = {
+            let mut splited_path: Vec<_> = in_obj.path.split("/").collect();
+            let last = splited_path.last_mut().unwrap();
+            let mut suffix = String::new();
+            (*last, suffix) = last
+                .split_once(".")
+                .map(|(stem, suffix)| (stem, format!(".{suffix}")))
+                .unwrap_or((last, "".to_owned()));
+            (splited_path.join("/"), suffix)
+        };
+
+        println!("{path_with_stem} {suffix}");
+
+        let chars_to_skip = path_with_stem.len() + 3; // if the name is `kek` then it's gonna be a len of `kek (` + 1
+        let skip_chars_from_back = chars_to_skip + suffix.len();
 
         // https://www.db-fiddle.com/f/i6XCvTSi5cpAVu5AAfiNqm/16
         sqlx::query_as(
@@ -78,7 +94,7 @@ impl<'d> FilesRepository<'d> {
                 WITH f AS (
                     SELECT path
                     FROM {FILES_TABLE}
-                    WHERE storage_id = $2 AND path ~ ('^(' || $1 || '|' || $1 || ' \(\d+\))$')
+                    WHERE storage_id = $3 AND path ~ ('^(' || $1 || $2 || '|' || $1 || ' \(\d+\)' || $2 || ')$')
                     ORDER BY path DESC
                 )
                 SELECT 
@@ -86,17 +102,17 @@ impl<'d> FilesRepository<'d> {
                         WHEN NOT EXISTS(
                             SELECT path 
                             FROM f 
-                            WHERE path = $1
-                        ) THEN $1
+                            WHERE path = $1 || $2
+                        ) THEN $1 || $2
                         ELSE
                             CASE
                                 WHEN COUNT(f) > 1 THEN (
                                     WITH cte AS (
                                         SELECT *
                                         FROM (
-                                            SELECT SUBSTRING(f.path, {chars_to_skip}, LENGTH(f.path) - {chars_to_skip})::numeric AS i
+                                            SELECT SUBSTRING(f.path, {chars_to_skip}, LENGTH(f.path) - {skip_chars_from_back})::numeric AS i
                                             FROM f
-                                            WHERE f.path != $1
+                                            WHERE f.path != $1 || $2
                                         ) AS n
                                         WHERE i > 0
                                         ORDER BY i
@@ -106,7 +122,7 @@ impl<'d> FilesRepository<'d> {
                                         FROM cte 
                                         ORDER BY cte.i DESC 
                                         LIMIT 1
-                                    )) || ')'
+                                    )) || ')' || $2
                                     FROM cte
                                     FULL OUTER JOIN (
                                         SELECT prev_i + 1 AS next_i
@@ -119,13 +135,13 @@ impl<'d> FilesRepository<'d> {
                                     ) t ON cte.i = t.next_i
                                     LIMIT 1
                                 )
-                                WHEN COUNT(f) = 1 THEN $1 || ' (1)'
-                                ELSE $1
+                                WHEN COUNT(f) = 1 THEN $1 || ' (1)' || $2
+                                ELSE $1 || $2
                             END
                     END,
-                    $2,
                     $3,
                     $4,
+                    $5,
                     false
                 FROM f
                 RETURNING *;
@@ -133,7 +149,8 @@ impl<'d> FilesRepository<'d> {
             )
             .as_str(),
         )
-        .bind(&in_obj.path)
+        .bind(&path_with_stem)
+        .bind(&suffix)
         .bind(in_obj.storage_id)
         .bind(id)
         .bind(in_obj.size)
