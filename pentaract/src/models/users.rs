@@ -1,8 +1,3 @@
-// pub struct InUser {
-//     pub username: String,
-//     pub password: String,
-// }
-
 pub struct InDBUser {
     pub username: String,
     pub password_hash: String,

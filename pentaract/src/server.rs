@@ -6,7 +6,10 @@ use tower_http::cors::{self, Any};
 
 use crate::{
     common::routing::app_state::AppState,
-    routers::{auth::AuthRouter, storage_workers::StorageWorkersRouter, storages::StoragesRouter},
+    routers::{
+        auth::AuthRouter, storage_workers::StorageWorkersRouter, storages::StoragesRouter,
+        users::UsersRouter,
+    },
 };
 
 pub struct Server {
@@ -27,6 +30,7 @@ impl Server {
             .allow_origin(Any);
 
         Router::new()
+            .nest("/users", UsersRouter::get_router(app_state.clone()))
             .nest("/auth", AuthRouter::get_router(app_state.clone()))
             .nest("/storages", StoragesRouter::get_router(app_state.clone()))
             .nest(
