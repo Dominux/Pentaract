@@ -3,6 +3,28 @@ import createLocalStore from '../../libs'
 import apiRequest, { apiMultipartRequest } from './request'
 
 /////////////////////////////////////////////////////////////
+////  USERS
+/////////////////////////////////////////////////////////////
+
+/**
+ * @typedef {Object} TokenData
+ * @property {string} access_token
+ */
+
+/**
+ *
+ * @param {string} username
+ * @param {string} password
+ * @returns {Promise<any>}
+ */
+const register = async (username, password) => {
+	return await apiRequest('/users', 'post', undefined, {
+		username,
+		password,
+	})
+}
+
+/////////////////////////////////////////////////////////////
 ////  AUTH
 /////////////////////////////////////////////////////////////
 
@@ -219,6 +241,9 @@ const deleteFile = async (storage_id, path) => {
 /////////////////////////////////////////////////////////////
 
 const API = {
+	users: {
+		register,
+	},
 	auth: {
 		login,
 	},

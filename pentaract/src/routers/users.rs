@@ -12,7 +12,7 @@ pub struct UsersRouter;
 impl UsersRouter {
     pub fn get_router(state: Arc<AppState>) -> Router {
         Router::new()
-            .route("", post(Self::register))
+            .route("/", post(Self::register))
             .with_state(state)
     }
 

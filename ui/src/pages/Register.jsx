@@ -7,12 +7,14 @@ import Paper from '@suid/material/Paper'
 import Typography from '@suid/material/Typography'
 import Divider from '@suid/material/Divider'
 import createLocalStore from '../../libs'
-import { useNavigate } from '@solidjs/router'
+import { A, useNavigate } from '@solidjs/router'
 
 import API from '../api'
+import { alertStore } from '../components/AlertStack'
 
 const Register = () => {
 	const [store, setStore] = createLocalStore()
+	const { addAlert } = alertStore
 	const navigate = useNavigate()
 
 	onMount(() => {
@@ -28,11 +30,16 @@ const Register = () => {
 	const handleSubmit = async (event) => {
 		event.preventDefault()
 		const data = new FormData(event.currentTarget)
+		const username = data.get('username')
+		const password = data.get('password')
 
-		const tokenData = await API.auth.login(
-			data.get('username'),
-			data.get('password')
-		)
+		// Registerting
+		await API.users.register(username, password)
+
+		addAlert('You registered successfully')
+
+		// Authenticating
+		const tokenData = await API.auth.login(username, password)
 
 		setStore('access_token', tokenData.access_token)
 
@@ -55,7 +62,7 @@ const Register = () => {
 						'& > :not(style)': { my: 1.5 },
 					}}
 				>
-					<Typography variant="h5">Pentaract Account</Typography>
+					<Typography variant="h5">Registering in Pentaract</Typography>
 					<Divider />
 					<TextField
 						name="username"
@@ -72,8 +79,14 @@ const Register = () => {
 					/>
 					<Divider />
 					<Button type="submit" variant="contained">
-						Login
+						Register
 					</Button>
+
+					<Divider />
+
+					<A class="default-link" href="/login">
+						Already have an account? Login!
+					</A>
 				</Box>
 			</Paper>
 		</Container>

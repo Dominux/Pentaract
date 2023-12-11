@@ -1,15 +1,15 @@
-a {
-  text-decoration: none;
-  color: inherit;
+a:not(.default-link) {
+	text-decoration: none;
+	color: inherit;
 }
 
 .drawer-paper.MuiDrawer-paper {
-  position: static;
-  height: 100%;
+	position: static;
+	height: 100%;
 }
 .drawer-paper-opened.MuiDrawer-paper {
-  width: 240px;
+	width: 240px;
 }
 .drawer-paper-closed.MuiDrawer-paper {
-  width: initial;
+	width: initial;
 }

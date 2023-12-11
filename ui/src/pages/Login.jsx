@@ -7,7 +7,7 @@ import Paper from '@suid/material/Paper'
 import Typography from '@suid/material/Typography'
 import Divider from '@suid/material/Divider'
 import createLocalStore from '../../libs'
-import { useNavigate } from '@solidjs/router'
+import { A, useNavigate } from '@solidjs/router'
 
 import API from '../api'
 
@@ -74,6 +74,12 @@ const Login = () => {
 					<Button type="submit" variant="contained">
 						Login
 					</Button>
+
+					<Divider />
+
+					<A class="default-link" href="/register">
+						Don't have an account yet? Register!
+					</A>
 				</Box>
 			</Paper>
 		</Container>
