@@ -1,9 +1,9 @@
-import { A } from "@solidjs/router";
-import ListItem from "@suid/material/ListItem";
-import ListItemButton from "@suid/material/ListItemButton";
-import ListItemIcon from "@suid/material/ListItemIcon";
-import ListItemText from "@suid/material/ListItemText";
-import { children } from "solid-js";
+import { A } from '@solidjs/router'
+import ListItem from '@suid/material/ListItem'
+import ListItemButton from '@suid/material/ListItemButton'
+import ListItemIcon from '@suid/material/ListItemIcon'
+import ListItemText from '@suid/material/ListItemText'
+import { children } from 'solid-js'
 
 /**
  * @typedef {Object} SideBarItemProps
@@ -18,35 +18,35 @@ import { children } from "solid-js";
  * @param {SideBarItemProps} props
  */
 const SideBarItem = (props) => {
-  const c = children(() => props.children);
+	const c = children(() => props.children)
 
-  return (
-    <ListItem key={props.text} disablePadding sx={{ display: "block" }}>
-      <A href={props.link}>
-        <ListItemButton
-          sx={{
-            minHeight: 48,
-            justifyContent: props.isFull ? "initial" : "center",
-            px: 2.5,
-          }}
-        >
-          <ListItemIcon
-            sx={{
-              minWidth: 0,
-              mr: props.isFull ? 3 : "auto",
-              justifyContent: "center",
-            }}
-          >
-            {c()}
-          </ListItemIcon>
-          <ListItemText
-            primary={props.text}
-            sx={{ display: props.isFull ? "border-box" : "none" }}
-          />
-        </ListItemButton>
-      </A>
-    </ListItem>
-  );
-};
+	return (
+		<ListItem key={props.text} disablePadding sx={{ display: 'block' }}>
+			<A href={props.link}>
+				<ListItemButton
+					sx={{
+						minHeight: 48,
+						justifyContent: props.isFull ? 'initial' : 'center',
+						px: 2.5,
+					}}
+				>
+					<ListItemIcon
+						sx={{
+							minWidth: 0,
+							mr: props.isFull ? 3 : 'auto',
+							justifyContent: 'center',
+						}}
+					>
+						{c()}
+					</ListItemIcon>
+					<ListItemText
+						primary={props.text}
+						sx={{ display: props.isFull ? 'border-box' : 'none' }}
+					/>
+				</ListItemButton>
+			</A>
+		</ListItem>
+	)
+}
 
-export default SideBarItem;
+export default SideBarItem

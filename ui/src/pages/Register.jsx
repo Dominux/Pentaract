@@ -11,7 +11,7 @@ import { useNavigate } from '@solidjs/router'
 
 import API from '../api'
 
-const Login = () => {
+const Register = () => {
 	const [store, setStore] = createLocalStore()
 	const navigate = useNavigate()
 
@@ -80,4 +80,4 @@ const Login = () => {
 	)
 }
 
-export default Login
+export default Register

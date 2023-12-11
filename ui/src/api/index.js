@@ -1,6 +1,6 @@
-import createLocalStore from "../../libs";
+import createLocalStore from '../../libs'
 
-import apiRequest, { apiMultipartRequest } from "./request";
+import apiRequest, { apiMultipartRequest } from './request'
 
 /////////////////////////////////////////////////////////////
 ////  AUTH
@@ -18,11 +18,11 @@ import apiRequest, { apiMultipartRequest } from "./request";
  * @returns {Promise<TokenData>}
  */
 const login = async (username, password) => {
-  return await apiRequest("/auth/login", "post", undefined, {
-    username,
-    password,
-  });
-};
+	return await apiRequest('/auth/login', 'post', undefined, {
+		username,
+		password,
+	})
+}
 
 /////////////////////////////////////////////////////////////
 ////  STORAGES
@@ -35,11 +35,11 @@ const login = async (username, password) => {
  * @returns
  */
 const createStorage = async (name, chat_id) => {
-  return await apiRequest("/storages", "post", getAuthToken(), {
-    name,
-    chat_id,
-  });
-};
+	return await apiRequest('/storages', 'post', getAuthToken(), {
+		name,
+		chat_id,
+	})
+}
 
 /**
  * @typedef {Object} Storage
@@ -58,16 +58,16 @@ const createStorage = async (name, chat_id) => {
  * @returns {Promise<StoragesSchema>}
  */
 const listStorages = async () => {
-  return await apiRequest("/storages", "get", getAuthToken());
-};
+	return await apiRequest('/storages', 'get', getAuthToken())
+}
 
 /**
  * @param {string} id
  * @returns {Promise<Storage>}
  */
 const getStorage = async (id) => {
-  return await apiRequest(`/storages/${id}`, "get", getAuthToken());
-};
+	return await apiRequest(`/storages/${id}`, 'get', getAuthToken())
+}
 
 /////////////////////////////////////////////////////////////
 ////  STORAGE WORKERS
@@ -89,20 +89,20 @@ const getStorage = async (id) => {
  * @returns {Promise<StorageWorker>}
  */
 const createStorageWorker = async (name, token, storage_id) => {
-  return await apiRequest("/storage_workers", "post", getAuthToken(), {
-    name,
-    token,
-    storage_id,
-  });
-};
+	return await apiRequest('/storage_workers', 'post', getAuthToken(), {
+		name,
+		token,
+		storage_id,
+	})
+}
 
 /**
  *
  * @returns {Promise<StorageWorker[]>}
  */
 const listStorageWorkers = async () => {
-  return await apiRequest("/storage_workers", "get", getAuthToken());
-};
+	return await apiRequest('/storage_workers', 'get', getAuthToken())
+}
 
 /////////////////////////////////////////////////////////////
 ////  FILES
@@ -116,13 +116,13 @@ const listStorageWorkers = async () => {
  * @returns
  */
 const createFolder = async (storage_id, path, folderName) => {
-  return await apiRequest(
-    `/storages/${storage_id}/files/create_folder`,
-    "post",
-    getAuthToken(),
-    { path, folder_name: folderName }
-  );
-};
+	return await apiRequest(
+		`/storages/${storage_id}/files/create_folder`,
+		'post',
+		getAuthToken(),
+		{ path, folder_name: folderName }
+	)
+}
 
 /**
  *
@@ -132,16 +132,16 @@ const createFolder = async (storage_id, path, folderName) => {
  * @returns
  */
 const uploadFile = async (storage_id, path, file) => {
-  const form = new FormData();
-  form.append("file", file);
-  form.append("path", path);
+	const form = new FormData()
+	form.append('file', file)
+	form.append('path', path)
 
-  return await apiMultipartRequest(
-    `/storages/${storage_id}/files/upload`,
-    getAuthToken(),
-    form
-  );
-};
+	return await apiMultipartRequest(
+		`/storages/${storage_id}/files/upload`,
+		getAuthToken(),
+		form
+	)
+}
 
 /**
  *
@@ -151,16 +151,16 @@ const uploadFile = async (storage_id, path, file) => {
  * @returns
  */
 const uploadFileTo = async (storage_id, path, file) => {
-  const form = new FormData();
-  form.append("file", file);
-  form.append("path", path);
+	const form = new FormData()
+	form.append('file', file)
+	form.append('path', path)
 
-  return await apiMultipartRequest(
-    `/storages/${storage_id}/files/upload_to`,
-    getAuthToken(),
-    form
-  );
-};
+	return await apiMultipartRequest(
+		`/storages/${storage_id}/files/upload_to`,
+		getAuthToken(),
+		form
+	)
+}
 
 /**
  * @typedef {Object} FSElement
@@ -176,12 +176,12 @@ const uploadFileTo = async (storage_id, path, file) => {
  * @returns {Promise<FSElement[]>}
  */
 const getFSLayer = async (storage_id, path) => {
-  return await apiRequest(
-    `/storages/${storage_id}/files/tree/${path}`,
-    "get",
-    getAuthToken()
-  );
-};
+	return await apiRequest(
+		`/storages/${storage_id}/files/tree/${path}`,
+		'get',
+		getAuthToken()
+	)
+}
 
 /**
  *
@@ -190,16 +190,16 @@ const getFSLayer = async (storage_id, path) => {
  * @returns {Promise<Blob>}
  */
 const download = async (storage_id, path) => {
-  const response = await apiRequest(
-    `/storages/${storage_id}/files/download/${path}`,
-    "get",
-    getAuthToken(),
-    undefined,
-    true
-  );
+	const response = await apiRequest(
+		`/storages/${storage_id}/files/download/${path}`,
+		'get',
+		getAuthToken(),
+		undefined,
+		true
+	)
 
-  return await response.blob();
-};
+	return await response.blob()
+}
 
 /**
  *
@@ -207,43 +207,43 @@ const download = async (storage_id, path) => {
  * @param {string} path
  */
 const deleteFile = async (storage_id, path) => {
-  await apiRequest(
-    `/storages/${storage_id}/files/${path}`,
-    "delete",
-    getAuthToken()
-  );
-};
+	await apiRequest(
+		`/storages/${storage_id}/files/${path}`,
+		'delete',
+		getAuthToken()
+	)
+}
 
 /////////////////////////////////////////////////////////////
 ////  API
 /////////////////////////////////////////////////////////////
 
 const API = {
-  auth: {
-    login,
-  },
-  storages: {
-    createStorage,
-    listStorages,
-    getStorage,
-  },
-  storageWorkers: {
-    createStorageWorker,
-    listStorageWorkers,
-  },
-  files: {
-    createFolder,
-    uploadFile,
-    uploadFileTo,
-    getFSLayer,
-    download,
-    deleteFile,
-  },
-};
+	auth: {
+		login,
+	},
+	storages: {
+		createStorage,
+		listStorages,
+		getStorage,
+	},
+	storageWorkers: {
+		createStorageWorker,
+		listStorageWorkers,
+	},
+	files: {
+		createFolder,
+		uploadFile,
+		uploadFileTo,
+		getFSLayer,
+		download,
+		deleteFile,
+	},
+}
 
 const getAuthToken = () => {
-  const [store, _setStore] = createLocalStore();
-  return `Bearer ${store.access_token}`;
-};
+	const [store, _setStore] = createLocalStore()
+	return `Bearer ${store.access_token}`
+}
 
-export default API;
+export default API

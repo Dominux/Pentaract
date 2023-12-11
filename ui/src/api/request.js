@@ -1,6 +1,6 @@
-import { alertStore } from "../components/AlertStack";
+import { alertStore } from '../components/AlertStack'
 
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = 'http://localhost:8080/api'
 
 /**
  * @typedef {'get' | 'post' | 'patch' | 'delete'} Method
@@ -16,46 +16,46 @@ const API_BASE = "http://localhost:8080/api";
  * @returns
  */
 const apiRequest = async (
-  path,
-  method,
-  auth_token,
-  body,
-  return_response = false
+	path,
+	method,
+	auth_token,
+	body,
+	return_response = false
 ) => {
-  const { addAlert } = alertStore;
+	const { addAlert } = alertStore
 
-  const fullpath = `${API_BASE}${path}`;
+	const fullpath = `${API_BASE}${path}`
 
-  const headers = new Headers();
-  headers.append("Content-Type", "application/json");
-  if (auth_token) {
-    headers.append("Authorization", auth_token);
-  }
+	const headers = new Headers()
+	headers.append('Content-Type', 'application/json')
+	if (auth_token) {
+		headers.append('Authorization', auth_token)
+	}
 
-  try {
-    const response = await fetch(fullpath, {
-      method,
-      body: JSON.stringify(body),
-      headers,
-    });
+	try {
+		const response = await fetch(fullpath, {
+			method,
+			body: JSON.stringify(body),
+			headers,
+		})
 
-    if (!response.ok) {
-      throw new Error(await response.text());
-    }
+		if (!response.ok) {
+			throw new Error(await response.text())
+		}
 
-    if (return_response) {
-      return response;
-    }
+		if (return_response) {
+			return response
+		}
 
-    try {
-      return await response.json();
-    } catch {}
-  } catch (err) {
-    addAlert(err.message, "error");
+		try {
+			return await response.json()
+		} catch {}
+	} catch (err) {
+		addAlert(err.message, 'error')
 
-    throw err;
-  }
-};
+		throw err
+	}
+}
 
 /**
  *
@@ -65,35 +65,35 @@ const apiRequest = async (
  * @returns
  */
 export const apiMultipartRequest = async (path, auth_token, form) => {
-  const { addAlert } = alertStore;
+	const { addAlert } = alertStore
 
-  const fullpath = `${API_BASE}${path}`;
+	const fullpath = `${API_BASE}${path}`
 
-  const headers = new Headers();
-  // headers.append("Content-Type", "multipart/form-data");
-  if (auth_token) {
-    headers.append("Authorization", auth_token);
-  }
+	const headers = new Headers()
+	// headers.append("Content-Type", "multipart/form-data");
+	if (auth_token) {
+		headers.append('Authorization', auth_token)
+	}
 
-  try {
-    const response = await fetch(fullpath, {
-      method: "post",
-      body: form,
-      headers,
-    });
+	try {
+		const response = await fetch(fullpath, {
+			method: 'post',
+			body: form,
+			headers,
+		})
 
-    if (!response.ok) {
-      throw new Error(await response.text());
-    }
+		if (!response.ok) {
+			throw new Error(await response.text())
+		}
 
-    try {
-      return await response.json();
-    } catch {}
-  } catch (err) {
-    addAlert(err.message, "error");
+		try {
+			return await response.json()
+		} catch {}
+	} catch (err) {
+		addAlert(err.message, 'error')
 
-    throw err;
-  }
-};
+		throw err
+	}
+}
 
-export default apiRequest;
+export default apiRequest
