@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::common::db::errors::map_not_found;
 use crate::errors::{PentaractError, PentaractResult};
 use crate::models::storages::{InStorage, Storage};
-use crate::repositories::files::FILES_TABLE;
+use crate::repositories::{access::TABLE as ACCESS_TABLE, files::FILES_TABLE};
 
 pub const TABLE: &str = "storages";
 
@@ -21,18 +21,11 @@ impl<'d> StoragesRepository<'d> {
         let id = Uuid::new_v4();
 
         sqlx::query(
-            format!(
-                "
-                INSERT INTO {TABLE} (id, name, chat_id, user_id)
-                VALUES ($1, $2, $3, $4);
-            "
-            )
-            .as_str(),
+            format!("INSERT INTO {TABLE} (id, name, chat_id) VALUES ($1, $2, $3)").as_str(),
         )
         .bind(id)
         .bind(in_obj.name.clone())
         .bind(in_obj.chat_id)
-        .bind(in_obj.user_id)
         .execute(self.db)
         .await
         .map_err(|e| match e {
@@ -48,25 +41,34 @@ impl<'d> StoragesRepository<'d> {
             }
         })?;
 
-        let storage = Storage::new(id, in_obj.name, in_obj.user_id, in_obj.chat_id);
+        let storage = Storage::new(id, in_obj.name, in_obj.chat_id);
         Ok(storage)
     }
 
     pub async fn list_by_user_id(&self, user_id: Uuid) -> PentaractResult<Vec<Storage>> {
-        sqlx::query_as(format!("SELECT * FROM {TABLE} WHERE user_id = $1").as_str())
-            .bind(user_id)
-            .fetch_all(self.db)
-            .await
-            .map_err(|_| PentaractError::Unknown)
+        sqlx::query_as(
+            format!(
+                "
+                SELECT s.* 
+                FROM {TABLE} s
+                JOIN {ACCESS_TABLE} a ON s.id = a.storage_id
+                WHERE a.user_id = $1
+            "
+            )
+            .as_str(),
+        )
+        .bind(user_id)
+        .fetch_all(self.db)
+        .await
+        .map_err(|_| PentaractError::Unknown)
     }
 
-    pub async fn get_by_id_and_user_id(&self, id: Uuid, user_id: Uuid) -> PentaractResult<Storage> {
-        sqlx::query_as(format!("SELECT * FROM {TABLE} WHERE id = $1 AND user_id = $2").as_str())
+    pub async fn get_by_id(&self, id: Uuid) -> PentaractResult<Storage> {
+        sqlx::query_as(format!("SELECT * FROM {TABLE} WHERE id = $1").as_str())
             .bind(id)
-            .bind(user_id)
             .fetch_one(self.db)
             .await
-            .map_err(|e| map_not_found(e, "storage_worker"))
+            .map_err(|e| map_not_found(e, "storage"))
     }
 
     pub async fn get_by_name_and_user_id(
@@ -74,12 +76,22 @@ impl<'d> StoragesRepository<'d> {
         name: &str,
         user_id: Uuid,
     ) -> PentaractResult<Storage> {
-        sqlx::query_as(format!("SELECT * FROM {TABLE} WHERE name = $1 AND user_id = $2").as_str())
-            .bind(name)
-            .bind(user_id)
-            .fetch_one(self.db)
-            .await
-            .map_err(|e| map_not_found(e, "storage_worker"))
+        sqlx::query_as(
+            format!(
+                "
+                SELECT s.* 
+                FROM {TABLE} s
+                JOIN {ACCESS_TABLE} a ON s.id = a.storage_id
+                WHERE a.user_id = $1 AND s.name = $2
+            "
+            )
+            .as_str(),
+        )
+        .bind(user_id)
+        .bind(name)
+        .fetch_one(self.db)
+        .await
+        .map_err(|e| map_not_found(e, "storage"))
     }
 
     pub async fn get_by_file_id(&self, file_id: Uuid) -> PentaractResult<Storage> {
@@ -89,6 +101,15 @@ impl<'d> StoragesRepository<'d> {
         .bind(file_id)
         .fetch_one(self.db)
         .await
-        .map_err(|e| map_not_found(e, "storage_worker"))
+        .map_err(|e| map_not_found(e, "storage"))
+    }
+
+    pub async fn delete_storage(&self, storage_id: Uuid) -> PentaractResult<()> {
+        sqlx::query(format!("DELETE FROM {TABLE} WHERE id = $1").as_str())
+            .bind(storage_id)
+            .execute(self.db)
+            .await
+            .map_err(|e| map_not_found(e, "storage"))?;
+        Ok(())
     }
 }

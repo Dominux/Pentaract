@@ -39,7 +39,7 @@ impl<'d> AuthService<'d> {
         PasswordManager::verify(&login_data.password, &user.password_hash)?;
 
         // generating access token
-        let user = AuthUser::new(user.id);
+        let user = AuthUser::new(user.id, login_data.email);
         let expire_in = Duration::from_secs(config.access_token_expire_in_secs.into());
         let token = JWTManager::generate(user, expire_in, &config.secret_key);
         Ok((token, expire_in))

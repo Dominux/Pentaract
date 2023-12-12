@@ -12,17 +12,19 @@ use crate::errors::{PentaractError, PentaractResult};
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
     pub(self) sub: String,
+    pub(self) email: String,
     pub(self) exp: usize,
 }
 
 #[derive(Clone)]
 pub struct AuthUser {
     pub id: Uuid,
+    pub email: String,
 }
 
 impl AuthUser {
-    pub fn new(id: Uuid) -> Self {
-        Self { id }
+    pub fn new(id: Uuid, email: String) -> Self {
+        Self { id, email }
     }
 }
 
@@ -34,6 +36,7 @@ impl JWTManager {
         let expire_timestamp = expire_date.duration_since(UNIX_EPOCH).unwrap().as_secs() as usize;
         let claims = Claims {
             sub: user.id.into(),
+            email: user.email,
             exp: expire_timestamp,
         };
         let key = EncodingKey::from_secret(secret_key.as_bytes());
@@ -49,7 +52,7 @@ impl JWTManager {
             .map(|token_data| {
                 let id = token_data.claims.sub;
                 let id = Uuid::from_str(&id).unwrap(); // token is valid so uuid is too
-                AuthUser::new(id)
+                AuthUser::new(id, token_data.claims.email)
             })
             .map_err(|_| PentaractError::NotAuthenticated)
     }

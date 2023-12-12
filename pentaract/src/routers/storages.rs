@@ -29,7 +29,7 @@ impl StoragesRouter {
         let files_router = FilesRouter::get_router(state.clone());
         Router::new()
             .route("/", get(Self::list).post(Self::create))
-            .route("/:storage_id", get(Self::get))
+            .route("/:storage_id", get(Self::get).delete(Self::delete))
             .nest("/:storage_id/files", files_router)
             .route_layer(middleware::from_fn_with_state(
                 state.clone(),
@@ -67,5 +67,14 @@ impl StoragesRouter {
     ) -> Result<Json<Storage>, (StatusCode, String)> {
         let storage = StoragesService::new(&state.db).get(id, &user).await?;
         Ok(Json(storage))
+    }
+
+    async fn delete(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+        Path(id): Path<Uuid>,
+    ) -> Result<StatusCode, (StatusCode, String)> {
+        StoragesService::new(&state.db).delete(id, &user).await?;
+        Ok(StatusCode::NO_CONTENT)
     }
 }

@@ -1,3 +1,4 @@
+pub mod access;
 pub mod channels;
 pub mod db;
 pub mod jwt_manager;

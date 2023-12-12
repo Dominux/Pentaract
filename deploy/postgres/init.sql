@@ -7,10 +7,7 @@ CREATE TABLE users (
 CREATE TABLE storages (
     id      UUID         PRIMARY KEY,
     name    VARCHAR(255) NOT NULL,
-    chat_id BigInt       NOT NULL UNIQUE,
-    user_id UUID         NOT NULL REFERENCES users
-                                  ON DELETE CASCADE 
-                                  ON UPDATE CASCADE
+    chat_id BigInt       NOT NULL UNIQUE
 );
 
 CREATE TABLE storage_workers (
@@ -26,13 +23,13 @@ CREATE TABLE storage_workers (
 CREATE TYPE access_type AS ENUM ('r', 'w', 'a');
 
 CREATE TABLE access (
-    id         UUID         PRIMARY KEY,
-    user_id    UUID         NOT NULL REFERENCES users
-                                      ON DELETE CASCADE 
-                                      ON UPDATE CASCADE,
-    storage_id UUID         NOT NULL REFERENCES storages
-                                      ON DELETE CASCADE 
-                                      ON UPDATE CASCADE,
+    id          UUID        PRIMARY KEY,
+    user_id     UUID        NOT NULL REFERENCES users
+                                     ON DELETE CASCADE 
+                                     ON UPDATE CASCADE,
+    storage_id  UUID        NOT NULL REFERENCES storages
+                                     ON DELETE CASCADE 
+                                     ON UPDATE CASCADE,
     access_type access_type NOT NULL,
 
     UNIQUE(user_id, storage_id)

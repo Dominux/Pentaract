@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 use crate::{
     common::{
+        access::check_access,
         channels::{
             ClientData, ClientMessage, ClientSender, DownloadFileData, StorageManagerData,
             UploadFileData,
@@ -12,28 +13,46 @@ use crate::{
         jwt_manager::AuthUser,
     },
     errors::{PentaractError, PentaractResult},
-    models::files::{FSElement, File, InFile},
-    repositories::files::FilesRepository,
+    models::{
+        access::AccessType,
+        files::{FSElement, File, InFile},
+    },
+    repositories::{access::AccessRepository, files::FilesRepository},
     schemas::files::{InFileSchema, InFolderSchema},
 };
 
 pub struct FilesService<'d> {
     repo: FilesRepository<'d>,
+    access_repo: AccessRepository<'d>,
     tx: ClientSender,
 }
 
 impl<'d> FilesService<'d> {
     pub fn new(db: &'d PgPool, tx: ClientSender) -> Self {
         let repo = FilesRepository::new(db);
-        Self { repo, tx }
+        let access_repo = AccessRepository::new(db);
+        Self {
+            repo,
+            access_repo,
+            tx,
+        }
     }
 
     pub async fn create_folder(
         &self,
         in_schema: InFolderSchema,
-        _user: &AuthUser,
+        user: &AuthUser,
     ) -> PentaractResult<()> {
-        // 0. validation
+        // 0. checking access
+        check_access(
+            &self.access_repo,
+            user.id,
+            in_schema.storage_id,
+            &AccessType::W,
+        )
+        .await?;
+
+        // 1. validation
         if !Self::validate_filepath(&in_schema.parent_path) {
             return Err(PentaractError::InvalidPath);
         }
@@ -41,7 +60,7 @@ impl<'d> FilesService<'d> {
             return Err(PentaractError::InvalidFolderName);
         }
 
-        // 1. constructing final values
+        // 2. constructing final values
         let path = if !in_schema.parent_path.is_empty() {
             format!("{}/{}/", in_schema.parent_path, in_schema.folder_name)
         } else {
@@ -49,19 +68,28 @@ impl<'d> FilesService<'d> {
         };
         let in_file = InFile::new(path, 0, in_schema.storage_id);
 
-        // 2. saving to db
+        // 3. saving to db
         self.repo.create_folder(in_file).await.map(|_| ())
     }
 
     pub async fn upload_to(&self, in_schema: InFileSchema, user: &AuthUser) -> PentaractResult<()> {
-        // 0. path validation
+        // 0. checking access
+        check_access(
+            &self.access_repo,
+            user.id,
+            in_schema.storage_id,
+            &AccessType::W,
+        )
+        .await?;
+
+        // 1. path validation
         if !Self::validate_filepath(&in_schema.path) {
             return Err(PentaractError::InvalidPath);
         }
 
         let in_file = InFile::new(in_schema.path, in_schema.size, in_schema.storage_id);
 
-        // 1. saving file to db
+        // 2. saving file to db
         let file = self.repo.create_file(in_file).await?;
 
         self._upload(file, in_schema.file, user).await
@@ -73,6 +101,15 @@ impl<'d> FilesService<'d> {
         file_data: Bytes,
         user: &AuthUser,
     ) -> PentaractResult<()> {
+        // 0. checking access
+        check_access(
+            &self.access_repo,
+            user.id,
+            in_file.storage_id,
+            &AccessType::W,
+        )
+        .await?;
+
         // 1. saving file in db
         let file = self.repo.create_file_anyway(in_file).await?;
 
@@ -126,15 +163,18 @@ impl<'d> FilesService<'d> {
         storage_id: Uuid,
         user: &AuthUser,
     ) -> PentaractResult<Vec<u8>> {
-        // 0. path validation
+        // 0. checking access
+        check_access(&self.access_repo, user.id, storage_id, &AccessType::R).await?;
+
+        // 1. path validation
         if !Self::validate_path(path) {
             return Err(PentaractError::InvalidPath);
         }
 
-        // 1. getting file by path
+        // 2. getting file by path
         let file = self.repo.get_file_by_path(path, storage_id).await?;
 
-        // 2. sending task to storage manager
+        // 3. sending task to storage manager
         let (resp_tx, resp_rx) = oneshot::channel();
 
         let message = {
@@ -152,14 +192,21 @@ impl<'d> FilesService<'d> {
         tracing::debug!("sending task to manager");
         let _ = self.tx.send(message).await;
 
-        // 3. waiting for a storage manager result
+        // 4. waiting for a storage manager result
         match resp_rx.await.unwrap().data {
             StorageManagerData::DownloadFile(r) => r,
             _ => unimplemented!(),
         }
     }
 
-    pub async fn list_dir(self, storage_id: Uuid, path: &str) -> PentaractResult<Vec<FSElement>> {
+    pub async fn list_dir(
+        self,
+        storage_id: Uuid,
+        path: &str,
+        user: &AuthUser,
+    ) -> PentaractResult<Vec<FSElement>> {
+        check_access(&self.access_repo, user.id, storage_id, &AccessType::R).await?;
+
         self.repo.list_dir(storage_id, path).await
     }
 
@@ -168,14 +215,17 @@ impl<'d> FilesService<'d> {
         old_path: &str,
         new_path: &str,
         storage_id: Uuid,
-        _user: &AuthUser,
+        user: &AuthUser,
     ) -> PentaractResult<()> {
-        // 0. path validation
+        // 0. checking access
+        check_access(&self.access_repo, user.id, storage_id, &AccessType::W).await?;
+
+        // 1. path validation
         if !Self::validate_path(old_path) || !Self::validate_path(new_path) {
             return Err(PentaractError::InvalidPath);
         }
 
-        // 1. renaming file
+        // 2. renaming file
         self.repo.update_path(old_path, new_path, storage_id).await
     }
 
@@ -183,14 +233,17 @@ impl<'d> FilesService<'d> {
         &self,
         path: &str,
         storage_id: Uuid,
-        _user: &AuthUser,
+        user: &AuthUser,
     ) -> PentaractResult<()> {
-        // 0. path validation
+        // 0. checking access
+        check_access(&self.access_repo, user.id, storage_id, &AccessType::W).await?;
+
+        // 1. path validation
         if !Self::validate_path(path) {
             return Err(PentaractError::InvalidPath);
         }
 
-        // 1. deleting file
+        // 2. deleting file
         self.repo.delete(path, storage_id).await
     }
 

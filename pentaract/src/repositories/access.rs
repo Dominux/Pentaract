@@ -1,0 +1,119 @@
+use sqlx::PgPool;
+use uuid::Uuid;
+
+use crate::common::db::errors::map_not_found;
+use crate::errors::{PentaractError, PentaractResult};
+use crate::models::access::{AccessType, GrantAccess};
+
+pub const TABLE: &str = "access";
+
+pub struct AccessRepository<'d> {
+    db: &'d PgPool,
+}
+
+impl<'d> AccessRepository<'d> {
+    pub fn new(db: &'d PgPool) -> Self {
+        Self { db }
+    }
+
+    pub async fn create_or_update(&self, grant_access: GrantAccess) -> PentaractResult<()> {
+        let id = Uuid::new_v4();
+
+        sqlx::query(
+            format!(
+                "
+                INSERT INTO {TABLE} (id, user_id, storage_id, access_type)
+                SELECT $1, u.id, $3, $4
+                FROM users u
+                WHERE u.email = $2
+                ON CONFLICT (user_id, storage_id) DO UPDATE
+                SET access_type = $4;
+            "
+            )
+            .as_str(),
+        )
+        .bind(id)
+        .bind(grant_access.user_email.clone())
+        .bind(grant_access.storage_id)
+        .bind(grant_access.access_type)
+        .execute(self.db)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::Database(ref dbe) if dbe.is_foreign_key_violation() => {
+                if let Some(constraint) = dbe.constraint() {
+                    if constraint.contains("user") {
+                        PentaractError::DoesNotExist(format!(
+                            "user with email \"{}\"",
+                            grant_access.user_email
+                        ))
+                    } else {
+                        PentaractError::DoesNotExist(format!(
+                            "storage with id \"{}\"",
+                            grant_access.storage_id
+                        ))
+                    }
+                } else {
+                    tracing::error!("{e}");
+                    PentaractError::Unknown
+                }
+            }
+            _ => {
+                tracing::error!("{e}");
+                PentaractError::Unknown
+            }
+        })?;
+
+        Ok(())
+    }
+
+    #[inline]
+    pub async fn has_access(
+        &self,
+        user_id: Uuid,
+        storage_id: Uuid,
+        access_type: &AccessType,
+    ) -> PentaractResult<bool> {
+        let access_type_filter = match access_type {
+            AccessType::R => "",
+            AccessType::W => "AND access_type in ('w', 'a')",
+            AccessType::A => "AND access_type = 'a'",
+        };
+
+        let has_access: (_,) = sqlx::query_as(
+            format!(
+                "
+            SELECT COUNT(*) > 0
+            FROM {TABLE}
+            WHERE user_id = $1 AND storage_id = $2 {access_type_filter};
+        "
+            )
+            .as_str(),
+        )
+        .bind(user_id)
+        .bind(storage_id)
+        .fetch_one(self.db)
+        .await
+        .map_err(|e| map_not_found(e, "access"))?;
+
+        Ok(has_access.0)
+    }
+
+    pub async fn delete_access(&self, user_id: Uuid, storage_id: Uuid) -> PentaractResult<()> {
+        sqlx::query(
+            format!(
+                "
+            DELETE FROM {TABLE}
+            WHERE user_id = $1 AND storage_id = $2
+        "
+            )
+            .as_str(),
+        )
+        .bind(user_id)
+        .bind(storage_id)
+        .execute(self.db)
+        .await
+        .map_err(|e| map_not_found(e, "access"))?;
+
+        Ok(())
+    }
+}

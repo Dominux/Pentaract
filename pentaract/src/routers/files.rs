@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::Path, sync::Arc};
 use axum::{
     body::Full,
     extract::{DefaultBodyLimit, Multipart, Path as RoutePath, State},
-    http::{HeaderMap, StatusCode},
+    http::StatusCode,
     middleware,
     response::{AppendHeaders, IntoResponse, Response},
     routing::{get, post},
@@ -61,7 +61,7 @@ impl FilesRouter {
         path: &str,
     ) -> Result<Response, (StatusCode, String)> {
         let fs_layer = FilesService::new(&state.db, state.tx.clone())
-            .list_dir(storage_id, path)
+            .list_dir(storage_id, path, &user)
             .await?;
         Ok(Json(fs_layer).into_response())
     }
