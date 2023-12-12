@@ -1,6 +1,6 @@
 CREATE TABLE users (
     id            UUID         PRIMARY KEY,
-    username      VARCHAR(255) NOT NULL UNIQUE,
+    email         VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL
 );
 
@@ -21,6 +21,21 @@ CREATE TABLE storage_workers (
                                      ON DELETE CASCADE 
                                      ON UPDATE CASCADE,
     storage_id UUID         REFERENCES storages
+);
+
+CREATE TYPE access_type AS ENUM ('r', 'w', 'a');
+
+CREATE TABLE access (
+    id         UUID         PRIMARY KEY,
+    user_id    UUID         NOT NULL REFERENCES users
+                                      ON DELETE CASCADE 
+                                      ON UPDATE CASCADE,
+    storage_id UUID         NOT NULL REFERENCES storages
+                                      ON DELETE CASCADE 
+                                      ON UPDATE CASCADE,
+    access_type access_type NOT NULL,
+
+    UNIQUE(user_id, storage_id)
 );
 
 CREATE TABLE files (

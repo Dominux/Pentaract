@@ -19,18 +19,18 @@ impl<'d> UsersRepository<'d> {
 
         sqlx::query(
             r#"
-                INSERT INTO users (id, username, password_hash)
+                INSERT INTO users (id, email, password_hash)
                 VALUES ($1, $2, $3);
             "#,
         )
         .bind(id)
-        .bind(in_obj.username.clone())
+        .bind(in_obj.email.clone())
         .bind(in_obj.password_hash.clone())
         .execute(self.db)
         .await
         .map_err(|e| match e {
-            sqlx::Error::Database(dbe) if dbe.constraint() == Some("users_username_key") => {
-                PentaractError::AlreadyExists("user with given username".into())
+            sqlx::Error::Database(dbe) if dbe.constraint() == Some("users_email_key") => {
+                PentaractError::AlreadyExists("user with given email".into())
             }
             _ => {
                 tracing::error!("{e}");
@@ -38,13 +38,13 @@ impl<'d> UsersRepository<'d> {
             }
         })?;
 
-        let user = User::new(id, in_obj.username, in_obj.password_hash);
+        let user = User::new(id, in_obj.email, in_obj.password_hash);
         Ok(user)
     }
 
-    pub async fn get_by_username(&self, username: &str) -> PentaractResult<User> {
-        sqlx::query_as("SELECT * FROM users WHERE username = $1")
-            .bind(username)
+    pub async fn get_by_email(&self, email: &str) -> PentaractResult<User> {
+        sqlx::query_as("SELECT * FROM users WHERE email = $1")
+            .bind(email)
             .fetch_one(self.db)
             .await
             .map_err(|e| map_not_found(e, "user"))

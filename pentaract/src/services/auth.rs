@@ -28,10 +28,10 @@ impl<'d> AuthService<'d> {
         login_data: LoginSchema,
         config: &Config,
     ) -> PentaractResult<(String, Duration)> {
-        // trying to find a user with a given username
+        // trying to find a user with a given email
         let user = self
             .repo
-            .get_by_username(&login_data.username)
+            .get_by_email(&login_data.email)
             .await
             .map_err(|_| PentaractError::NotAuthenticated)?;
 

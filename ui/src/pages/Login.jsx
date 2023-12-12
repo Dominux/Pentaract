@@ -30,7 +30,7 @@ const Login = () => {
 		const data = new FormData(event.currentTarget)
 
 		const tokenData = await API.auth.login(
-			data.get('username'),
+			data.get('email'),
 			data.get('password')
 		)
 
@@ -57,12 +57,7 @@ const Login = () => {
 				>
 					<Typography variant="h5">Pentaract Account</Typography>
 					<Divider />
-					<TextField
-						name="username"
-						label="Username"
-						variant="standard"
-						required
-					/>
+					<TextField name="email" label="email" variant="standard" required />
 					<TextField
 						name="password"
 						label="Password"

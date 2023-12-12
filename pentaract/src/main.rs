@@ -52,7 +52,7 @@ async fn main() {
     // creating a superuser
     {
         let password_hash = PasswordManager::generate(&config.superuser_pass).unwrap();
-        let user = InDBUser::new(config.superuser_name.clone(), password_hash);
+        let user = InDBUser::new(config.superuser_email.clone(), password_hash);
         let result = UsersRepository::new(&db).create(user).await;
 
         match result {

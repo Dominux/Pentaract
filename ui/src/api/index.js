@@ -13,13 +13,13 @@ import apiRequest, { apiMultipartRequest } from './request'
 
 /**
  *
- * @param {string} username
+ * @param {string} email
  * @param {string} password
  * @returns {Promise<any>}
  */
-const register = async (username, password) => {
+const register = async (email, password) => {
 	return await apiRequest('/users', 'post', undefined, {
-		username,
+		email,
 		password,
 	})
 }
@@ -35,13 +35,13 @@ const register = async (username, password) => {
 
 /**
  *
- * @param {string} username
+ * @param {string} email
  * @param {string} password
  * @returns {Promise<TokenData>}
  */
-const login = async (username, password) => {
+const login = async (email, password) => {
 	return await apiRequest('/auth/login', 'post', undefined, {
-		username,
+		email,
 		password,
 	})
 }

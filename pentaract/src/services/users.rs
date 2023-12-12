@@ -17,7 +17,7 @@ impl<'d> UsersService<'d> {
 
     pub async fn create(&self, in_user: InUser) -> PentaractResult<()> {
         let password_hash = PasswordManager::generate(&in_user.password).unwrap();
-        let user = InDBUser::new(in_user.username, password_hash);
+        let user = InDBUser::new(in_user.email, password_hash);
         self.repo.create(user).await?;
         Ok(())
     }

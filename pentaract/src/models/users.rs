@@ -1,12 +1,12 @@
 pub struct InDBUser {
-    pub username: String,
+    pub email: String,
     pub password_hash: String,
 }
 
 impl InDBUser {
-    pub fn new(username: String, password_hash: String) -> Self {
+    pub fn new(email: String, password_hash: String) -> Self {
         Self {
-            username,
+            email,
             password_hash,
         }
     }
@@ -15,15 +15,15 @@ impl InDBUser {
 #[derive(Debug, sqlx::FromRow)]
 pub struct User {
     pub id: uuid::Uuid,
-    pub username: String,
+    pub email: String,
     pub password_hash: String,
 }
 
 impl User {
-    pub fn new(id: uuid::Uuid, username: String, password_hash: String) -> Self {
+    pub fn new(id: uuid::Uuid, email: String, password_hash: String) -> Self {
         Self {
             id,
-            username,
+            email,
             password_hash,
         }
     }

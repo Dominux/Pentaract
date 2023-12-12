@@ -30,16 +30,16 @@ const Register = () => {
 	const handleSubmit = async (event) => {
 		event.preventDefault()
 		const data = new FormData(event.currentTarget)
-		const username = data.get('username')
+		const email = data.get('email')
 		const password = data.get('password')
 
 		// Registerting
-		await API.users.register(username, password)
+		await API.users.register(email, password)
 
 		addAlert('You registered successfully')
 
 		// Authenticating
-		const tokenData = await API.auth.login(username, password)
+		const tokenData = await API.auth.login(email, password)
 
 		setStore('access_token', tokenData.access_token)
 
@@ -64,12 +64,7 @@ const Register = () => {
 				>
 					<Typography variant="h5">Registering in Pentaract</Typography>
 					<Divider />
-					<TextField
-						name="username"
-						label="Username"
-						variant="standard"
-						required
-					/>
+					<TextField name="email" label="email" variant="standard" required />
 					<TextField
 						name="password"
 						label="Password"
