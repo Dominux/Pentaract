@@ -3,7 +3,8 @@ use uuid::Uuid;
 
 use crate::common::db::errors::map_not_found;
 use crate::errors::{PentaractError, PentaractResult};
-use crate::models::access::{AccessType, GrantAccess};
+use crate::models::access::{AccessType, UserWithAccess};
+use crate::schemas::access::GrantAccess;
 
 pub const TABLE: &str = "access";
 
@@ -16,7 +17,11 @@ impl<'d> AccessRepository<'d> {
         Self { db }
     }
 
-    pub async fn create_or_update(&self, grant_access: GrantAccess) -> PentaractResult<()> {
+    pub async fn create_or_update(
+        &self,
+        storage_id: Uuid,
+        grant_access: GrantAccess,
+    ) -> PentaractResult<()> {
         let id = Uuid::new_v4();
 
         sqlx::query(
@@ -34,7 +39,7 @@ impl<'d> AccessRepository<'d> {
         )
         .bind(id)
         .bind(grant_access.user_email.clone())
-        .bind(grant_access.storage_id)
+        .bind(storage_id)
         .bind(grant_access.access_type)
         .execute(self.db)
         .await
@@ -47,10 +52,7 @@ impl<'d> AccessRepository<'d> {
                             grant_access.user_email
                         ))
                     } else {
-                        PentaractError::DoesNotExist(format!(
-                            "storage with id \"{}\"",
-                            grant_access.storage_id
-                        ))
+                        PentaractError::DoesNotExist(format!("storage with id \"{}\"", storage_id))
                     }
                 } else {
                     tracing::error!("{e}");
@@ -64,6 +66,27 @@ impl<'d> AccessRepository<'d> {
         })?;
 
         Ok(())
+    }
+
+    pub async fn list_users_with_access(
+        &self,
+        storage_id: Uuid,
+    ) -> PentaractResult<Vec<UserWithAccess>> {
+        sqlx::query_as(
+            format!(
+                "
+            SELECT u.id AS id, u.email AS email, a.access_type AS access_type
+            FROM {TABLE} a
+            JOIN users u ON a.user_id = u.id
+            WHERE a.storage_id = $1
+        "
+            )
+            .as_str(),
+        )
+        .bind(storage_id)
+        .fetch_all(self.db)
+        .await
+        .map_err(|e| map_not_found(e, "user"))
     }
 
     #[inline]

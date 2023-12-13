@@ -92,6 +92,65 @@ const getStorage = async (id) => {
 }
 
 /////////////////////////////////////////////////////////////
+////  ACCESS
+/////////////////////////////////////////////////////////////
+
+/**
+ * @typedef {'r' | 'w' | 'a'} AccessType
+ */
+
+/**
+ * @typedef {Object} UserWithAccess
+ * @property {string} id
+ * @property {string} email
+ * @property {AccessType} access_type
+ */
+
+/**
+ *
+ * @param {string} storageID
+ * @param {string} email
+ * @param {AccessType} accessType
+ * @returns
+ */
+const grantAccess = async (storageID, email, accessType) => {
+	return await apiRequest(
+		`/storages/${storageID}/access`,
+		'post',
+		getAuthToken(),
+		{ user_email: email, access_type: accessType }
+	)
+}
+
+/**
+ *
+ * @param {string} storageID
+ * @returns {Promise<UserWithAccess[]>}
+ */
+const listUsersWithAccess = async (storageID) => {
+	return await apiRequest(
+		`/storages/${storageID}/access`,
+		'get',
+		getAuthToken()
+	)
+}
+
+/**
+ *
+ * @param {string} storageID
+ * @param {string} userID
+ * @returns
+ */
+const restrictAccess = async (storageID, userID) => {
+	return await apiRequest(
+		`/storages/${storageID}/access`,
+		'delete',
+		getAuthToken(),
+		{ user_id: userID }
+	)
+}
+
+/////////////////////////////////////////////////////////////
 ////  STORAGE WORKERS
 /////////////////////////////////////////////////////////////
 
@@ -251,6 +310,11 @@ const API = {
 		createStorage,
 		listStorages,
 		getStorage,
+	},
+	access: {
+		grantAccess,
+		listUsersWithAccess,
+		restrictAccess,
 	},
 	storageWorkers: {
 		createStorageWorker,

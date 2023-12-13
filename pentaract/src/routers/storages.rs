@@ -16,7 +16,10 @@ use crate::{
         routing::{app_state::AppState, middlewares::auth::logged_in_required},
     },
     models::storages::Storage,
-    schemas::storages::{InStorageSchema, StoragesListSchema},
+    schemas::{
+        access::{GrantAccess, RestrictAccess},
+        storages::{InStorageSchema, StoragesListSchema},
+    },
     services::storages::StoragesService,
 };
 
@@ -30,6 +33,12 @@ impl StoragesRouter {
         Router::new()
             .route("/", get(Self::list).post(Self::create))
             .route("/:storage_id", get(Self::get).delete(Self::delete))
+            .route(
+                "/:storage_id/access",
+                get(Self::list_users_with_access)
+                    .post(Self::grant_access)
+                    .delete(Self::restrict_access),
+            )
             .nest("/:storage_id/files", files_router)
             .route_layer(middleware::from_fn_with_state(
                 state.clone(),
@@ -75,6 +84,41 @@ impl StoragesRouter {
         Path(id): Path<Uuid>,
     ) -> Result<StatusCode, (StatusCode, String)> {
         StoragesService::new(&state.db).delete(id, &user).await?;
+        Ok(StatusCode::NO_CONTENT)
+    }
+
+    async fn grant_access(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+        Path(id): Path<Uuid>,
+        Json(in_schema): Json<GrantAccess>,
+    ) -> Result<StatusCode, (StatusCode, String)> {
+        StoragesService::new(&state.db)
+            .grant_access(id, in_schema, &user)
+            .await?;
+        Ok(StatusCode::NO_CONTENT)
+    }
+
+    async fn list_users_with_access(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+        Path(id): Path<Uuid>,
+    ) -> impl IntoResponse {
+        let users = StoragesService::new(&state.db)
+            .list_users_with_access(id, &user)
+            .await?;
+        Ok::<_, (StatusCode, String)>(Json(users))
+    }
+
+    async fn restrict_access(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+        Path(id): Path<Uuid>,
+        Json(in_schema): Json<RestrictAccess>,
+    ) -> Result<StatusCode, (StatusCode, String)> {
+        StoragesService::new(&state.db)
+            .restrict_access(id, in_schema, &user)
+            .await?;
         Ok(StatusCode::NO_CONTENT)
     }
 }

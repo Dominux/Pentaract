@@ -6,16 +6,19 @@ import ListItemIcon from '@suid/material/ListItemIcon'
 import ListItemText from '@suid/material/ListItemText'
 import UploadFileIcon from '@suid/icons-material/UploadFile'
 import UploadFolderIcon from '@suid/icons-material/DriveFolderUpload'
+import FolderOpenIcon from '@suid/icons-material/FolderOpen'
+import LockIcon from '@suid/icons-material/Lock'
 import Grid from '@suid/material/Grid'
 import Stack from '@suid/material/Stack'
 import Typography from '@suid/material/Typography'
-import { Divider } from '@suid/material'
+import { Divider, ToggleButton, ToggleButtonGroup } from '@suid/material'
 
 import API from '../../api'
 import FSListItem from '../../components/FSListItem'
 import Menu from '../../components/Menu'
 import CreateFolderDialog from '../../components/CreateFolderDialog'
 import { alertStore } from '../../components/AlertStack'
+import Access from '../../components/Access'
 
 const Files = () => {
 	const { addAlert } = alertStore
@@ -23,12 +26,22 @@ const Files = () => {
 	 * @type {[import("solid-js").Accessor<import("../../api").FSElement[]>, any]}
 	 */
 	const [fsLayer, setFsLayer] = createSignal([])
+	/**
+	 * @type {[import("solid-js").Accessor<import("../../api").Storage>, any]}
+	 */
+	const [storage, setStorage] = createSignal()
+	const [isAccessPage, setIsAccessPage] = createSignal(false)
 	const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] =
 		createSignal(false)
 	const navigate = useNavigate()
 	const params = useParams()
 
 	let uploadFileInputElement
+
+	const fetchStorage = async () => {
+		const storage = await API.storages.getStorage(params.id)
+		setStorage(storage)
+	}
 
 	const fetchFSLayer = async (path = params.path) => {
 		const fsLayerRes = await API.files.getFSLayer(params.id, path)
@@ -43,7 +56,7 @@ const Files = () => {
 		setFsLayer(fsLayerRes)
 	}
 
-	onMount(fetchFSLayer)
+	onMount(() => Promise.all([fetchStorage(), fetchFSLayer()]).then())
 
 	useBeforeLeave(async (e) => {
 		const basePath = `/storages/${params.id}/files`
@@ -104,69 +117,91 @@ const Files = () => {
 		<>
 			<Stack container>
 				<Grid container sx={{ mb: 2 }}>
-					<Grid item xs={6}>
-						<Typography variant="h4">Files</Typography>
+					<Grid item xs={4}>
+						<Typography variant="h4">{storage()?.name}</Typography>
 					</Grid>
+
+					<Grid item xs={4}>
+						<ToggleButtonGroup
+							exclusive
+							onChange={(_, val) => setIsAccessPage(val)}
+							sx={{ display: 'flex', justifyContent: 'center' }}
+						>
+							<ToggleButton value={false}>
+								<FolderOpenIcon fontSize="small" />
+								&nbsp; Files
+							</ToggleButton>
+							<ToggleButton value={true}>
+								<LockIcon fontSize="small" />
+								&nbsp; Access
+							</ToggleButton>
+						</ToggleButtonGroup>
+					</Grid>
+
 					<Grid
 						item
-						xs={6}
+						xs={4}
 						sx={{ display: 'flex', justifyContent: 'flex-end' }}
 					>
-						<Menu button_title="Create">
-							<MenuItem onClick={openCreateFolderDialog}>
-								<ListItemIcon>
-									<UploadFolderIcon />
-								</ListItemIcon>
-								<ListItemText>Create folder</ListItemText>
-							</MenuItem>
-							<MenuItem onClick={uploadFileClickHandler}>
-								<ListItemIcon>
-									<UploadFileIcon />
-								</ListItemIcon>
-								<ListItemText>Upload file</ListItemText>
-							</MenuItem>
-							<MenuItem
-								onClick={() => navigate(`/storages/${params.id}/upload_to`)}
-							>
-								<ListItemIcon>
-									<UploadFileIcon />
-								</ListItemIcon>
-								<ListItemText>Upload file to</ListItemText>
-							</MenuItem>
-						</Menu>
+						<Show when={!isAccessPage()}>
+							<Menu button_title="Create">
+								<MenuItem onClick={openCreateFolderDialog}>
+									<ListItemIcon>
+										<UploadFolderIcon />
+									</ListItemIcon>
+									<ListItemText>Create folder</ListItemText>
+								</MenuItem>
+								<MenuItem onClick={uploadFileClickHandler}>
+									<ListItemIcon>
+										<UploadFileIcon />
+									</ListItemIcon>
+									<ListItemText>Upload file</ListItemText>
+								</MenuItem>
+								<MenuItem
+									onClick={() => navigate(`/storages/${params.id}/upload_to`)}
+								>
+									<ListItemIcon>
+										<UploadFileIcon />
+									</ListItemIcon>
+									<ListItemText>Upload file to</ListItemText>
+								</MenuItem>
+							</Menu>
+						</Show>
 					</Grid>
 				</Grid>
 
-				<Grid>
-					<Show when={fsLayer().length} fallback={<>Not files yet</>}>
-						<List sx={{ minWidth: 320, maxWidth: 540, mx: 'auto' }}>
-							<Divider />
-							{mapArray(fsLayer, (fsElement) => (
-								<>
-									<FSListItem
-										fsElement={fsElement}
-										storageId={params.id}
-										onDelete={fetchFSLayer}
-									/>
-									<Divider />
-								</>
-							))}
-						</List>
-					</Show>
-				</Grid>
-			</Stack>
+				<Show when={!isAccessPage()} fallback={<Access />}>
+					<Grid>
+						<Show when={fsLayer().length} fallback={<>Not files yet</>}>
+							<List sx={{ minWidth: 320, maxWidth: 540, mx: 'auto' }}>
+								<Divider />
+								{mapArray(fsLayer, (fsElement) => (
+									<>
+										<FSListItem
+											fsElement={fsElement}
+											storageId={params.id}
+											onDelete={fetchFSLayer}
+										/>
+										<Divider />
+									</>
+								))}
+							</List>
+						</Show>
+					</Grid>
 
-			<CreateFolderDialog
-				isOpened={isCreateFolderDialogOpen()}
-				onCreate={createFolder}
-				onClose={closeCreateFolderDialog}
-			/>
-			<input
-				ref={uploadFileInputElement}
-				type="file"
-				style="display: none"
-				onChange={uploadFile}
-			/>
+					<CreateFolderDialog
+						isOpened={isCreateFolderDialogOpen()}
+						onCreate={createFolder}
+						onClose={closeCreateFolderDialog}
+					/>
+					<input
+						ref={uploadFileInputElement}
+						type="file"
+						style="display: none"
+						onChange={uploadFile}
+					/>
+				</Show>
+			</Stack>
 		</>
 	)
 }

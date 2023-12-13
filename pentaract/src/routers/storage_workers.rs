@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::{
     extract::State, http::StatusCode, middleware, response::IntoResponse, routing::get, Extension,
-    Form, Json, Router,
+    Json, Router,
 };
 
 use crate::{

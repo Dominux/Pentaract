@@ -5,11 +5,14 @@ use crate::{
     common::{access::check_access, jwt_manager::AuthUser},
     errors::{PentaractError, PentaractResult},
     models::{
-        access::{AccessType, GrantAccess},
+        access::{AccessType, UserWithAccess},
         storages::{InStorage, Storage},
     },
     repositories::{access::AccessRepository, storages::StoragesRepository},
-    schemas::storages::InStorageSchema,
+    schemas::{
+        access::{GrantAccess, RestrictAccess},
+        storages::InStorageSchema,
+    },
 };
 
 pub struct StoragesService<'d> {
@@ -43,8 +46,11 @@ impl<'d> StoragesService<'d> {
         let storage = self.repo.create(in_model).await?;
 
         // setting user as the storage admin
-        let access_schema = GrantAccess::new(user.email.clone(), storage.id, AccessType::A);
-        let result = self.access_repo.create_or_update(access_schema).await;
+        let access_schema = GrantAccess::new(user.email.clone(), AccessType::A);
+        let result = self
+            .access_repo
+            .create_or_update(storage.id, access_schema)
+            .await;
         if result.is_err() {
             // fallback
             self.repo.delete_storage(storage.id).await?
@@ -66,5 +72,37 @@ impl<'d> StoragesService<'d> {
         check_access(&self.access_repo, user.id, id, &AccessType::A).await?;
 
         self.repo.delete_storage(id).await
+    }
+
+    pub async fn grant_access(
+        &self,
+        id: Uuid,
+        in_schema: GrantAccess,
+        user: &AuthUser,
+    ) -> PentaractResult<()> {
+        check_access(&self.access_repo, user.id, id, &AccessType::A).await?;
+
+        self.access_repo.create_or_update(id, in_schema).await
+    }
+
+    pub async fn list_users_with_access(
+        &self,
+        id: Uuid,
+        user: &AuthUser,
+    ) -> PentaractResult<Vec<UserWithAccess>> {
+        check_access(&self.access_repo, user.id, id, &AccessType::A).await?;
+
+        self.access_repo.list_users_with_access(id).await
+    }
+
+    pub async fn restrict_access(
+        &self,
+        id: Uuid,
+        in_schema: RestrictAccess,
+        user: &AuthUser,
+    ) -> PentaractResult<()> {
+        check_access(&self.access_repo, user.id, id, &AccessType::A).await?;
+
+        self.access_repo.delete_access(in_schema.user_id, id).await
     }
 }

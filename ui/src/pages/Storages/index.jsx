@@ -68,7 +68,7 @@ const Storages = () => {
 										}}
 									>
 										<TableCell component="th" scope="row">
-											{storage.id}
+											{storage.name}
 										</TableCell>
 										<TableCell>{storage.chat_id}</TableCell>
 										<TableCell></TableCell>
