@@ -1,4 +1,5 @@
 use axum::http::StatusCode;
+use pwhash::error;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -13,7 +14,7 @@ pub enum PentaractError {
 
     #[error("{0} already exists")]
     AlreadyExists(String),
-    #[error("`{0}` does not exist")]
+    #[error("{0} does not exist")]
     DoesNotExist(String),
     #[error("User already has a storage with such name")]
     StorageNameConflict,
@@ -33,6 +34,8 @@ pub enum PentaractError {
     InvalidPath,
     #[error("Invalid folder name")]
     InvalidFolderName,
+    #[error("You cannot manage access of yourself")]
+    CannotManageAccessOfYourself,
     #[error("unknown error")]
     Unknown,
     #[error("{0} header is required")]
@@ -48,7 +51,8 @@ impl From<PentaractError> for (StatusCode, String) {
             | PentaractError::StorageNameConflict
             | PentaractError::StorageChatIdConflict
             | PentaractError::StorageWorkerNameConflict
-            | PentaractError::StorageWorkerTokenConflict => (StatusCode::CONFLICT, e.to_string()),
+            | PentaractError::StorageWorkerTokenConflict
+            | PentaractError::CannotManageAccessOfYourself => (StatusCode::CONFLICT, e.to_string()),
             PentaractError::NotAuthenticated => (StatusCode::UNAUTHORIZED, e.to_string()),
             PentaractError::DoesNotExist(_) => (StatusCode::NOT_FOUND, e.to_string()),
             PentaractError::HeaderMissed(_)

@@ -28,13 +28,13 @@ const Login = () => {
 	const handleSubmit = async (event) => {
 		event.preventDefault()
 		const data = new FormData(event.currentTarget)
+		const email = data.get('email')
+		const password = data.get('password')
 
-		const tokenData = await API.auth.login(
-			data.get('email'),
-			data.get('password')
-		)
+		const tokenData = await API.auth.login(email, password)
 
 		setStore('access_token', tokenData.access_token)
+		setStore('user', { email })
 
 		const redirect_url = store.redirect || '/'
 		navigate(redirect_url)
@@ -57,7 +57,13 @@ const Login = () => {
 				>
 					<Typography variant="h5">Pentaract Account</Typography>
 					<Divider />
-					<TextField name="email" label="email" variant="standard" required />
+					<TextField
+						name="email"
+						label="email"
+						variant="standard"
+						type="email"
+						required
+					/>
 					<TextField
 						name="password"
 						label="Password"

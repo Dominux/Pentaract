@@ -24,15 +24,16 @@ impl<'d> AccessRepository<'d> {
     ) -> PentaractResult<()> {
         let id = Uuid::new_v4();
 
-        sqlx::query(
+        let result = sqlx::query(
             format!(
                 "
                 INSERT INTO {TABLE} (id, user_id, storage_id, access_type)
                 SELECT $1, u.id, $3, $4
                 FROM users u
                 WHERE u.email = $2
-                ON CONFLICT (user_id, storage_id) DO UPDATE
-                SET access_type = $4;
+                ON CONFLICT ON CONSTRAINT access_user_id_storage_id_key
+                DO
+                    UPDATE SET access_type = $4;
             "
             )
             .as_str(),
@@ -45,25 +46,20 @@ impl<'d> AccessRepository<'d> {
         .await
         .map_err(|e| match e {
             sqlx::Error::Database(ref dbe) if dbe.is_foreign_key_violation() => {
-                if let Some(constraint) = dbe.constraint() {
-                    if constraint.contains("user") {
-                        PentaractError::DoesNotExist(format!(
-                            "user with email \"{}\"",
-                            grant_access.user_email
-                        ))
-                    } else {
-                        PentaractError::DoesNotExist(format!("storage with id \"{}\"", storage_id))
-                    }
-                } else {
-                    tracing::error!("{e}");
-                    PentaractError::Unknown
-                }
+                PentaractError::DoesNotExist(format!("storage with id \"{}\"", storage_id))
             }
             _ => {
                 tracing::error!("{e}");
                 PentaractError::Unknown
             }
         })?;
+
+        if result.rows_affected() == 0 {
+            return Err(PentaractError::DoesNotExist(format!(
+                "user with email \"{}\"",
+                grant_access.user_email
+            )));
+        }
 
         Ok(())
     }

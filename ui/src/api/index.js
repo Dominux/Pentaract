@@ -96,7 +96,7 @@ const getStorage = async (id) => {
 /////////////////////////////////////////////////////////////
 
 /**
- * @typedef {'r' | 'w' | 'a'} AccessType
+ * @typedef {'R' | 'W' | 'A'} AccessType
  */
 
 /**

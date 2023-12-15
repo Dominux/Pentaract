@@ -11,7 +11,11 @@ import LockIcon from '@suid/icons-material/Lock'
 import Grid from '@suid/material/Grid'
 import Stack from '@suid/material/Stack'
 import Typography from '@suid/material/Typography'
-import { Divider, ToggleButton, ToggleButtonGroup } from '@suid/material'
+import Divider from '@suid/material/Divider'
+import Fab from '@suid/material/Fab'
+import ToggleButton from '@suid/material/ToggleButton'
+import ToggleButtonGroup from '@suid/material/ToggleButtonGroup'
+import AddIcon from '@suid/icons-material/Add'
 
 import API from '../../api'
 import FSListItem from '../../components/FSListItem'
@@ -19,6 +23,7 @@ import Menu from '../../components/Menu'
 import CreateFolderDialog from '../../components/CreateFolderDialog'
 import { alertStore } from '../../components/AlertStack'
 import Access from '../../components/Access'
+import GrantAccess from '../../components/GrantAccess'
 
 const Files = () => {
 	const { addAlert } = alertStore
@@ -33,10 +38,29 @@ const Files = () => {
 	const [isAccessPage, setIsAccessPage] = createSignal(false)
 	const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] =
 		createSignal(false)
+	const [isGrantAccessButtonVisible, setIsGrantButtonAccessVisible] =
+		createSignal(false)
+	const [isGrantAccessVisible, setIsGrantAccessVisible] = createSignal(false)
+	/**
+	 * @type {[import("solid-js").Accessor<import("../api").UserWithAccess[]>, any]}
+	 */
+	const [users, setUsers] = createSignal([])
 	const navigate = useNavigate()
 	const params = useParams()
 
 	let uploadFileInputElement
+
+	const fetchUsersWithAccess = async () => {
+		try {
+			const users = await API.access.listUsersWithAccess(params.id)
+			setUsers(users)
+			setIsGrantButtonAccessVisible(true)
+		} catch (err) {
+			addAlert('You do not have permissions to manage access', 'error')
+			console.error(err)
+			setIsGrantButtonAccessVisible(false)
+		}
+	}
 
 	const fetchStorage = async () => {
 		const storage = await API.storages.getStorage(params.id)
@@ -124,6 +148,8 @@ const Files = () => {
 					<Grid item xs={4}>
 						<ToggleButtonGroup
 							exclusive
+							value={isAccessPage()}
+							color="primary"
 							onChange={(_, val) => setIsAccessPage(val)}
 							sx={{ display: 'flex', justifyContent: 'center' }}
 						>
@@ -143,7 +169,26 @@ const Files = () => {
 						xs={4}
 						sx={{ display: 'flex', justifyContent: 'flex-end' }}
 					>
-						<Show when={!isAccessPage()}>
+						<Show
+							when={!isAccessPage()}
+							fallback={
+								<Show when={isGrantAccessButtonVisible()}>
+									<Fab
+										variant="extended"
+										color="success"
+										onClick={() => setIsGrantAccessVisible(true)}
+									>
+										<AddIcon sx={{ mr: 1 }} />
+										Grant access
+									</Fab>
+									<GrantAccess
+										isVisible={isGrantAccessVisible()}
+										afterGrant={fetchUsersWithAccess}
+										onClose={() => setIsGrantAccessVisible(false)}
+									/>
+								</Show>
+							}
+						>
 							<Menu button_title="Create">
 								<MenuItem onClick={openCreateFolderDialog}>
 									<ListItemIcon>
@@ -170,7 +215,17 @@ const Files = () => {
 					</Grid>
 				</Grid>
 
-				<Show when={!isAccessPage()} fallback={<Access />}>
+				<Show
+					when={!isAccessPage()}
+					fallback={
+						<Access
+							setIsGrantAccessVisible={setIsGrantAccessVisible}
+							users={users()}
+							onMount={fetchUsersWithAccess}
+							refetchUsers={fetchUsersWithAccess}
+						/>
+					}
+				>
 					<Grid>
 						<Show when={fsLayer().length} fallback={<>Not files yet</>}>
 							<List sx={{ minWidth: 320, maxWidth: 540, mx: 'auto' }}>

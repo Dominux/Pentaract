@@ -14,7 +14,7 @@ import { createSignal } from 'solid-js'
 import { useNavigate, useParams } from '@solidjs/router'
 
 import API from '../api'
-import DeleteConfirmDialog from './DeleteConfirmDialog'
+import ActionConfirmDialog from './ActionConfirmDialog'
 
 /**
  * @typedef {Object} FSListItemProps
@@ -30,7 +30,7 @@ import DeleteConfirmDialog from './DeleteConfirmDialog'
  */
 const FSListItem = (props) => {
 	const [moreAnchorEl, setMoreAnchorEl] = createSignal(null)
-	const [isDeleteConfirmDialogOpened, setIsDeleteConfirmDialogOpened] =
+	const [isActionConfirmDialogOpened, setIsActionConfirmDialogOpened] =
 		createSignal(false)
 	const navigate = useNavigate()
 	const params = useParams()
@@ -63,16 +63,16 @@ const FSListItem = (props) => {
 		a.remove()
 	}
 
-	const openDeleteConfirmDialog = () => {
+	const openActionConfirmDialog = () => {
 		handleCloseMore()
-		setIsDeleteConfirmDialogOpened(true)
+		setIsActionConfirmDialogOpened(true)
 	}
-	const closeDeleteConfirmDialog = () => {
-		setIsDeleteConfirmDialogOpened(false)
+	const closeActionConfirmDialog = () => {
+		setIsActionConfirmDialogOpened(false)
 	}
 
 	const deleteFile = async () => {
-		closeDeleteConfirmDialog()
+		closeActionConfirmDialog()
 		await API.files.deleteFile(params.id, props.fsElement.path)
 		props.onDelete()
 	}
@@ -110,7 +110,7 @@ const FSListItem = (props) => {
 					<ListItemText>Download</ListItemText>
 				</MenuItem>
 
-				<MenuItem onClick={openDeleteConfirmDialog}>
+				<MenuItem onClick={openActionConfirmDialog}>
 					<ListItemIcon>
 						<DeleteIcon fontSize="small" />
 					</ListItemIcon>
@@ -118,12 +118,13 @@ const FSListItem = (props) => {
 				</MenuItem>
 			</MenuMUI>
 
-			<DeleteConfirmDialog
+			<ActionConfirmDialog
+				action="Delete"
 				entity="file"
-				entityId={props.fsElement.name}
-				isOpened={isDeleteConfirmDialogOpened()}
+				actionDescription={`delete file ${props.fsElement.name}`}
+				isOpened={isActionConfirmDialogOpened()}
 				onConfirm={deleteFile}
-				onCancel={closeDeleteConfirmDialog}
+				onCancel={closeActionConfirmDialog}
 			/>
 		</>
 	)

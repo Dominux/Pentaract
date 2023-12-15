@@ -6,31 +6,34 @@ import DialogTitle from '@suid/material/DialogTitle'
 import DialogContentText from '@suid/material/DialogContentText'
 
 /**
- * @typedef {Object} DeleteConfirmDialogProps
+ * @typedef {Object} ActionConfirmDialogProps
  * @property {boolean} isOpened
  * @property {string} entity
- * @property {string} entityId
+ * @property {string} action
+ * @property {string} actionDescription
  * @property {() => void} onConfirm
  * @property {() => void} onCancel
  */
 
 /**
  *
- * @param {DeleteConfirmDialogProps} props
+ * @param {ActionConfirmDialogProps} props
  */
-const DeleteConfirmDialog = (props) => {
+const ActionConfirmDialog = (props) => {
 	return (
 		<Dialog open={props.isOpened} onClose={props.onCancel}>
-			<DialogTitle>Delete {props.entity}?</DialogTitle>
+			<DialogTitle>
+				{props.action} {props.entity}?
+			</DialogTitle>
 			<DialogContent>
 				<DialogContentText>
-					Are you sure you want to delete {props.entity} {props.entityId}?
+					Are you sure you want to {props.actionDescription}?
 				</DialogContentText>
 			</DialogContent>
 
 			<DialogActions>
 				<Button onClick={props.onConfirm} color="warning">
-					Delete
+					Confirm
 				</Button>
 				<Button onClick={props.onCancel} color="info">
 					Cancel
@@ -40,4 +43,4 @@ const DeleteConfirmDialog = (props) => {
 	)
 }
 
-export default DeleteConfirmDialog
+export default ActionConfirmDialog

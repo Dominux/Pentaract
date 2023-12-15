@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -82,6 +84,10 @@ impl<'d> StoragesService<'d> {
     ) -> PentaractResult<()> {
         check_access(&self.access_repo, user.id, id, &AccessType::A).await?;
 
+        if in_schema.user_email == user.email {
+            return Err(PentaractError::CannotManageAccessOfYourself);
+        }
+
         self.access_repo.create_or_update(id, in_schema).await
     }
 
@@ -102,6 +108,10 @@ impl<'d> StoragesService<'d> {
         user: &AuthUser,
     ) -> PentaractResult<()> {
         check_access(&self.access_repo, user.id, id, &AccessType::A).await?;
+
+        if in_schema.user_id == user.id {
+            return Err(PentaractError::CannotManageAccessOfYourself);
+        }
 
         self.access_repo.delete_access(in_schema.user_id, id).await
     }

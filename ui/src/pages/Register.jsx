@@ -64,7 +64,13 @@ const Register = () => {
 				>
 					<Typography variant="h5">Registering in Pentaract</Typography>
 					<Divider />
-					<TextField name="email" label="email" variant="standard" required />
+					<TextField
+						name="email"
+						label="email"
+						type="email"
+						variant="standard"
+						required
+					/>
 					<TextField
 						name="password"
 						label="Password"
