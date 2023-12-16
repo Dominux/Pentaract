@@ -9,12 +9,14 @@ import FileIcon from '@suid/icons-material/InsertDriveFileOutlined'
 import FolderIcon from '@suid/icons-material/Folder'
 import MoreVertIcon from '@suid/icons-material/MoreVert'
 import DownloadIcon from '@suid/icons-material/Download'
+import InfoIcon from '@suid/icons-material/Info'
 import DeleteIcon from '@suid/icons-material/Delete'
 import { createSignal } from 'solid-js'
 import { useNavigate, useParams } from '@solidjs/router'
 
 import API from '../api'
 import ActionConfirmDialog from './ActionConfirmDialog'
+import FileInfoDialog from './FileInfo'
 
 /**
  * @typedef {Object} FSListItemProps
@@ -32,6 +34,7 @@ const FSListItem = (props) => {
 	const [moreAnchorEl, setMoreAnchorEl] = createSignal(null)
 	const [isActionConfirmDialogOpened, setIsActionConfirmDialogOpened] =
 		createSignal(false)
+	const [isInfoDialogOpened, setIsInfoDialogOpened] = createSignal(false)
 	const navigate = useNavigate()
 	const params = useParams()
 
@@ -103,6 +106,13 @@ const FSListItem = (props) => {
 				onClose={handleCloseMore}
 				MenuListProps={{ 'aria-labelledby': 'basic-button' }}
 			>
+				<MenuItem onClick={() => setIsInfoDialogOpened(true)}>
+					<ListItemIcon>
+						<InfoIcon fontSize="small" />
+					</ListItemIcon>
+					<ListItemText>Info</ListItemText>
+				</MenuItem>
+
 				<MenuItem onClick={download} disabled={!props.fsElement.is_file}>
 					<ListItemIcon>
 						<DownloadIcon fontSize="small" />
@@ -125,6 +135,12 @@ const FSListItem = (props) => {
 				isOpened={isActionConfirmDialogOpened()}
 				onConfirm={deleteFile}
 				onCancel={closeActionConfirmDialog}
+			/>
+
+			<FileInfoDialog
+				file={props.fsElement}
+				isOpened={isInfoDialogOpened()}
+				onClose={() => setIsInfoDialogOpened(false)}
 			/>
 		</>
 	)

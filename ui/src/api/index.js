@@ -255,6 +255,7 @@ const uploadFileTo = async (storage_id, path, file) => {
  * @property {string} path
  * @property {string} name
  * @property {boolean} is_file
+ * @property {number} size
  */
 
 /**
