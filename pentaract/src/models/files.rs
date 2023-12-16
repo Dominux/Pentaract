@@ -46,6 +46,7 @@ impl File {
 #[derive(Debug, sqlx::FromRow)]
 pub struct DBFSElement {
     pub name: String,
+    pub size: i64,
     pub is_file: bool,
 }
 
@@ -53,5 +54,6 @@ pub struct DBFSElement {
 pub struct FSElement {
     pub path: String,
     pub name: String,
+    pub size: i64,
     pub is_file: bool,
 }

@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::common::db::errors::map_not_found;
 use crate::errors::{PentaractError, PentaractResult};
-use crate::models::storages::{InStorage, Storage};
+use crate::models::storages::{InStorage, Storage, StorageWithInfo};
 use crate::repositories::{access::TABLE as ACCESS_TABLE, files::FILES_TABLE};
 
 pub const TABLE: &str = "storages";
@@ -45,14 +45,16 @@ impl<'d> StoragesRepository<'d> {
         Ok(storage)
     }
 
-    pub async fn list_by_user_id(&self, user_id: Uuid) -> PentaractResult<Vec<Storage>> {
+    pub async fn list_by_user_id(&self, user_id: Uuid) -> PentaractResult<Vec<StorageWithInfo>> {
         sqlx::query_as(
             format!(
                 "
-                SELECT s.* 
+                SELECT s.*, COUNT(f.id) AS files_amount, COALESCE(SUM(f.size), 0)::BigInt as size 
                 FROM {TABLE} s
                 JOIN {ACCESS_TABLE} a ON s.id = a.storage_id
-                WHERE a.user_id = $1
+                LEFT JOIN {FILES_TABLE} f ON s.id = f.storage_id
+                WHERE a.user_id = $1 AND (f.path NOT LIKE '%/' OR f.path IS NULL)
+                GROUP by s.id
             "
             )
             .as_str(),
@@ -60,7 +62,7 @@ impl<'d> StoragesRepository<'d> {
         .bind(user_id)
         .fetch_all(self.db)
         .await
-        .map_err(|_| PentaractError::Unknown)
+        .map_err(|e| map_not_found(e, "storages"))
     }
 
     pub async fn get_by_id(&self, id: Uuid) -> PentaractResult<Storage> {

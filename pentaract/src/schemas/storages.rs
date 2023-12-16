@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{common::types::ChatId, models::storages::Storage};
+use crate::{
+    common::types::ChatId,
+    models::storages::{Storage, StorageWithInfo},
+};
 
 #[derive(Deserialize)]
 pub struct InStorageSchema {
@@ -10,11 +13,11 @@ pub struct InStorageSchema {
 
 #[derive(Serialize)]
 pub struct StoragesListSchema {
-    pub storages: Vec<Storage>,
+    pub storages: Vec<StorageWithInfo>,
 }
 
 impl StoragesListSchema {
-    pub fn new(storages: Vec<Storage>) -> Self {
+    pub fn new(storages: Vec<StorageWithInfo>) -> Self {
         Self { storages }
     }
 }

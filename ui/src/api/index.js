@@ -71,8 +71,15 @@ const createStorage = async (name, chat_id) => {
  */
 
 /**
+ * @typedef {Object} StorageWithInfoProperties
+ * @property {number} size
+ * @property {number} files_amount
+ * @typedef {Storage & StorageWithInfoProperties} StorageWithInfo
+ */
+
+/**
  * @typedef {Object} StoragesSchema
- * @property {Storage[]} storages
+ * @property {StorageWithInfo[]} storages
  */
 
 /**

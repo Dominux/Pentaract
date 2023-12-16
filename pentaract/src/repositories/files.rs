@@ -206,7 +206,13 @@ impl<'d> FilesRepository<'d> {
 
             format!(
                 "
-                SELECT DISTINCT {split_part} AS name, $1 || {split_part} = path AS is_file 
+                SELECT 
+                    DISTINCT {split_part} AS name, 
+                    $1 || {split_part} = path AS is_file,
+                    CASE
+                        WHEN $1 || {split_part} = path THEN size
+                        ELSE (SELECT SUM(size) FROM {FILES_TABLE} WHERE path LIKE $1 || {split_part} || '/' || '%')::BigInt
+                    END AS size
                 FROM {FILES_TABLE} 
                 WHERE storage_id = $2 {path_filter} AND is_uploaded AND {split_part} <> '';
             "
@@ -224,7 +230,10 @@ impl<'d> FilesRepository<'d> {
             .bind(storage_id)
             .fetch_all(self.db)
             .await
-            .map_err(|_| PentaractError::Unknown)?;
+            .map_err(|e| {
+                tracing::error!("{e}");
+                PentaractError::Unknown
+            })?;
         let fs_layer = fs_layer
             .into_iter()
             .map(|el| {
@@ -233,6 +242,7 @@ impl<'d> FilesRepository<'d> {
                     path,
                     name: el.name,
                     is_file: el.is_file,
+                    size: el.size,
                 }
             })
             .collect();

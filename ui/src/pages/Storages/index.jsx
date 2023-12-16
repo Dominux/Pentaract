@@ -10,13 +10,14 @@ import TableHead from '@suid/material/TableHead'
 import TableRow from '@suid/material/TableRow'
 import Button from '@suid/material/Button'
 import { Show, createSignal, mapArray, onMount } from 'solid-js'
-import { A, useNavigate } from '@solidjs/router'
+import { useNavigate } from '@solidjs/router'
 
 import API from '../../api'
+import { convertSize } from '../../common/size_converter'
 
 const Storages = () => {
 	/**
-	 * @type {[import("solid-js").Accessor<import("../../api").Storage[]>, any]}
+	 * @type {[import("solid-js").Accessor<import("../../api").StorageWithInfo[]>, any]}
 	 */
 	const [storages, setStorages] = createSignal([])
 	const navigate = useNavigate()
@@ -71,8 +72,8 @@ const Storages = () => {
 											{storage.name}
 										</TableCell>
 										<TableCell>{storage.chat_id}</TableCell>
-										<TableCell></TableCell>
-										<TableCell></TableCell>
+										<TableCell>{convertSize(storage.size)}</TableCell>
+										<TableCell>{storage.files_amount}</TableCell>
 									</TableRow>
 								))}
 							</TableBody>

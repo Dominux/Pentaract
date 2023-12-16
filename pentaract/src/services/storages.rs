@@ -8,7 +8,7 @@ use crate::{
     errors::{PentaractError, PentaractResult},
     models::{
         access::{AccessType, UserWithAccess},
-        storages::{InStorage, Storage},
+        storages::{InStorage, Storage, StorageWithInfo},
     },
     repositories::{access::AccessRepository, storages::StoragesRepository},
     schemas::{
@@ -60,7 +60,7 @@ impl<'d> StoragesService<'d> {
         result.map(|_| storage)
     }
 
-    pub async fn list(&self, user: &AuthUser) -> PentaractResult<Vec<Storage>> {
+    pub async fn list(&self, user: &AuthUser) -> PentaractResult<Vec<StorageWithInfo>> {
         self.repo.list_by_user_id(user.id).await
     }
 
