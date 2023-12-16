@@ -1,5 +1,5 @@
 import { useBeforeLeave, useNavigate, useParams } from '@solidjs/router'
-import { Show, createSignal, mapArray, onMount } from 'solid-js'
+import { Show, createSignal, mapArray, onCleanup, onMount } from 'solid-js'
 import List from '@suid/material/List'
 import MenuItem from '@suid/material/MenuItem'
 import ListItemIcon from '@suid/material/ListItemIcon'
@@ -47,6 +47,7 @@ const Files = () => {
 	const [users, setUsers] = createSignal([])
 	const navigate = useNavigate()
 	const params = useParams()
+	const basePath = `/storages/${params.id}/files`
 
 	let uploadFileInputElement
 
@@ -80,10 +81,23 @@ const Files = () => {
 		setFsLayer(fsLayerRes)
 	}
 
-	onMount(() => Promise.all([fetchStorage(), fetchFSLayer()]).then())
+	const reload = async () => {
+		if (window.location.pathname.startsWith(basePath)) {
+			console.log(window.location.pathname)
+			await fetchFSLayer()
+		}
+	}
+
+	onMount(() => {
+		Promise.all([fetchStorage(), fetchFSLayer()]).then()
+
+		// Either me or the solidjs-router creator is dumb af so I have to use this sht
+		window.addEventListener('popstate', reload, false)
+	})
+
+	onCleanup(() => window.removeEventListener('popstate', reload, false))
 
 	useBeforeLeave(async (e) => {
-		const basePath = `/storages/${params.id}/files`
 		if (e.to.startsWith(basePath)) {
 			let newPath = e.to.slice(basePath.length)
 
