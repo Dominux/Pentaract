@@ -5,6 +5,8 @@ use super::errors::{PentaractError, PentaractResult};
 #[derive(Debug, Clone)]
 pub struct Config {
     pub db_uri: String,
+    pub db_uri_without_dbname: String,
+    pub db_name: String,
     pub port: u16,
     pub workers: u16,
     pub channel_capacity: u16,
@@ -20,15 +22,15 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> PentaractResult<Self> {
-        let db_uri = {
-            let db_user: String = Self::get_env_var("DATABASE_USER")?;
-            let db_password: String = Self::get_env_var("DATABASE_PASSWORD")?;
-            let db_name: String = Self::get_env_var("DATABASE_NAME")?;
-            let db_host: String = Self::get_env_var("DATABASE_HOST")?;
-            let db_port: String = Self::get_env_var("DATABASE_PORT")?;
-
-            format!("postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}")
-        };
+        let db_user: String = Self::get_env_var("DATABASE_USER")?;
+        let db_password: String = Self::get_env_var("DATABASE_PASSWORD")?;
+        let db_name: String = Self::get_env_var("DATABASE_NAME")?;
+        let db_host: String = Self::get_env_var("DATABASE_HOST")?;
+        let db_port: String = Self::get_env_var("DATABASE_PORT")?;
+        let db_uri =
+            { format!("postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}") };
+        let db_uri_without_dbname =
+            { format!("postgres://{db_user}:{db_password}@{db_host}:{db_port}") };
         let port = Self::get_env_var("PORT")?;
         let workers = Self::get_env_var("WORKERS")?;
         let channel_capacity = Self::get_env_var("CHANNEL_CAPACITY")?;
@@ -41,6 +43,8 @@ impl Config {
 
         Ok(Self {
             db_uri,
+            db_uri_without_dbname,
+            db_name,
             port,
             workers,
             channel_capacity,

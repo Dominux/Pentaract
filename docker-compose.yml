@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 volumes:
   pentaract-db-volume:
@@ -29,7 +29,6 @@ services:
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: ${DATABASE_NAME}
     restart: unless-stopped
     healthcheck:
       test: pg_isready --username=${DATABASE_USER} --dbname=${DATABASE_NAME}
@@ -38,6 +37,5 @@ services:
       retries: 10
     volumes:
       - pentaract-db-volume:/var/lib/postgresql/data
-      - ./deploy/postgres:/docker-entrypoint-initdb.d
     networks:
       - pentaract-network

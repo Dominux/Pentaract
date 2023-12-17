@@ -3,17 +3,16 @@ use std::{
     sync::Arc,
 };
 
-use common::{channels::ClientMessage, db::pool::get_pool, password_manager::PasswordManager};
-use errors::PentaractError;
-use models::users::InDBUser;
-use repositories::users::UsersRepository;
 use tokio::{sync::mpsc, time};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::common::routing::app_state::AppState;
-use crate::config::Config;
-use crate::server::Server;
-use crate::storage_manager::StorageManager;
+use crate::{
+    common::{channels::ClientMessage, db::pool::get_pool, routing::app_state::AppState},
+    config::Config,
+    server::Server,
+    startup::{create_db, create_superuser, init_db},
+    storage_manager::StorageManager,
+};
 
 mod common;
 mod config;
@@ -24,6 +23,7 @@ mod routers;
 mod schemas;
 mod server;
 mod services;
+mod startup;
 mod storage_manager;
 
 #[tokio::main]
@@ -41,6 +41,15 @@ async fn main() {
 
     let (tx, rx) = mpsc::channel::<ClientMessage>(config.channel_capacity.into());
 
+    // creating db
+    create_db(
+        &config.db_uri_without_dbname,
+        &config.db_name,
+        config.workers.into(),
+        time::Duration::from_secs(30),
+    )
+    .await;
+
     // set up connection pool
     let db = get_pool(
         &config.db_uri,
@@ -49,26 +58,11 @@ async fn main() {
     )
     .await;
 
+    // initing db
+    init_db(&db).await;
+
     // creating a superuser
-    {
-        let password_hash = PasswordManager::generate(&config.superuser_pass).unwrap();
-        let user = InDBUser::new(config.superuser_email.clone(), password_hash);
-        let result = UsersRepository::new(&db).create(user).await;
-
-        match result {
-            Ok(_) => tracing::debug!("created superuser"),
-
-            // ignoring conflict error -> just skipping it
-            Err(e) if matches!(e, PentaractError::AlreadyExists(_)) => {
-                tracing::debug!("superuser already exists; skipping")
-            }
-
-            // in case of another error kind -> terminating process
-            _ => {
-                panic!("can't create superuser; terminating process")
-            }
-        };
-    }
+    create_superuser(&db, &config).await;
 
     // running manager
     let config_copy = config.clone();
