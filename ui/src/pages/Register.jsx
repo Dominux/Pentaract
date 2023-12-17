@@ -79,7 +79,7 @@ const Register = () => {
 						required
 					/>
 					<Divider />
-					<Button type="submit" variant="contained">
+					<Button type="submit" variant="contained" color="secondary">
 						Register
 					</Button>
 

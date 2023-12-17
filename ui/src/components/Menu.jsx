@@ -1,5 +1,6 @@
 import MenuMUI from '@suid/material/Menu'
-import Button from '@suid/material/Button'
+import Fab from '@suid/material/Fab'
+import AddIcon from '@suid/icons-material/Add'
 import { children, createSignal } from 'solid-js'
 
 /**
@@ -23,19 +24,17 @@ const Menu = (props) => {
 
 	return (
 		<>
-			<Button
+			<Fab
 				id="basic-button"
-				aria-controls={open() ? 'basic-menu' : undefined}
-				aria-haspopup="true"
-				aria-expanded={open() ? 'true' : undefined}
-				variant="outlined"
-				color="success"
+				variant="extended"
+				color="secondary"
 				onClick={(event) => {
 					setAnchorEl(event.currentTarget)
 				}}
 			>
+				<AddIcon sx={{ mr: 1 }} />
 				{props.button_title}
-			</Button>
+			</Fab>
 			<MenuMUI
 				id="basic-menu"
 				anchorEl={anchorEl()}

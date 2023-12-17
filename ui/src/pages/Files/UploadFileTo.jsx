@@ -83,7 +83,7 @@ const UploadFileTo = () => {
 					fullWidth
 					required
 				/>
-				<Button type="submit" variant="contained" color="success">
+				<Button type="submit" variant="contained" color="secondary">
 					Upload
 				</Button>
 			</Box>

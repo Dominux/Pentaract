@@ -189,7 +189,7 @@ const Files = () => {
 								<Show when={isGrantAccessButtonVisible()}>
 									<Fab
 										variant="extended"
-										color="success"
+										color="secondary"
 										onClick={() => setIsGrantAccessVisible(true)}
 									>
 										<AddIcon sx={{ mr: 1 }} />

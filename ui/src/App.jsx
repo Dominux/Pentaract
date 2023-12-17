@@ -1,4 +1,5 @@
 import { Routes, Route } from '@solidjs/router'
+import { ThemeProvider, createTheme } from '@suid/material'
 
 import Login from './pages/Login'
 import Home from './pages/Home'
@@ -12,9 +13,20 @@ import Files from './pages/Files'
 import UploadFileTo from './pages/Files/UploadFileTo'
 import Register from './pages/Register'
 
+const theme = createTheme({
+	palette: {
+		primary: {
+			main: '#0D1821',
+		},
+		secondary: {
+			main: '#F9E900',
+		},
+	},
+})
+
 const App = () => {
 	return (
-		<>
+		<ThemeProvider theme={theme}>
 			<Routes>
 				<Route path="/login" component={Login} />
 				<Route path="/register" component={Register} />
@@ -34,7 +46,7 @@ const App = () => {
 			</Routes>
 
 			<AlertStack />
-		</>
+		</ThemeProvider>
 	)
 }
 

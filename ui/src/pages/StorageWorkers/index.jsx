@@ -36,7 +36,7 @@ const StorageWorkers = () => {
 					<Button
 						onClick={() => navigate('/storage_workers/register')}
 						variant="contained"
-						color="success"
+						color="secondary"
 					>
 						Register new
 					</Button>

@@ -101,7 +101,7 @@ const StorageCreateForm = () => {
 					fullWidth
 					required
 				/>
-				<Button type="submit" variant="contained" color="success">
+				<Button type="submit" variant="contained" color="secondary">
 					Register
 				</Button>
 			</Box>
