@@ -22,10 +22,11 @@ pub struct StorageManagerService<'d> {
     telegram_baseurl: &'d str,
     db: &'d PgPool,
     chunk_size: usize,
+    rate_limit: u8,
 }
 
 impl<'d> StorageManagerService<'d> {
-    pub fn new(db: &'d PgPool, telegram_baseurl: &'d str) -> Self {
+    pub fn new(db: &'d PgPool, telegram_baseurl: &'d str, rate_limit: u8) -> Self {
         let files_repo = FilesRepository::new(db);
         let storages_repo = StoragesRepository::new(db);
         let chunk_size = 20 * 1024 * 1024;
@@ -35,6 +36,7 @@ impl<'d> StorageManagerService<'d> {
             chunk_size,
             telegram_baseurl,
             db,
+            rate_limit,
         }
     }
 
@@ -76,8 +78,7 @@ impl<'d> StorageManagerService<'d> {
         position: usize,
         bytes_chunk: &[u8],
     ) -> PentaractResult<FileChunk> {
-        // TODO: take rate limit from envs
-        let scheduler = StorageWorkersScheduler::new(self.db, 15);
+        let scheduler = StorageWorkersScheduler::new(self.db, self.rate_limit);
 
         let document = TelegramBotApi::new(self.telegram_baseurl, scheduler)
             .upload(bytes_chunk, chat_id, storage_id)
@@ -118,8 +119,7 @@ impl<'d> StorageManagerService<'d> {
         storage_id: Uuid,
         chunk: FileChunk,
     ) -> PentaractResult<DownloadedChunkSchema> {
-        // TODO: take rate limit from envs
-        let scheduler = StorageWorkersScheduler::new(self.db, 15);
+        let scheduler = StorageWorkersScheduler::new(self.db, self.rate_limit);
 
         let file = TelegramBotApi::new(self.telegram_baseurl, scheduler)
             .download(&chunk.telegram_file_id, storage_id)

@@ -18,6 +18,7 @@ pub struct Config {
     pub secret_key: String,
 
     pub telegram_api_base_url: String,
+    pub telegram_rate_limit: u8,
 }
 
 impl Config {
@@ -40,6 +41,7 @@ impl Config {
         let refresh_token_expire_in_days = Self::get_env_var("REFRESH_TOKEN_EXPIRE_IN_DAYS")?;
         let secret_key = Self::get_env_var("SECRET_KEY")?;
         let telegram_api_base_url = Self::get_env_var("TELEGRAM_API_BASE_URL")?;
+        let telegram_rate_limit = Self::get_env_var_with_default("TELEGRAM_RATE_LIMIT", 18)?;
 
         Ok(Self {
             db_uri,
@@ -54,6 +56,7 @@ impl Config {
             refresh_token_expire_in_days,
             secret_key,
             telegram_api_base_url,
+            telegram_rate_limit,
         })
     }
 
@@ -63,5 +66,16 @@ impl Config {
             .map_err(|_| PentaractError::EnvConfigLoadingError(env_var.to_owned()))?
             .parse::<T>()
             .map_err(|_| PentaractError::EnvVarParsingError(env_var.to_owned()))
+    }
+
+    #[inline]
+    fn get_env_var_with_default<T: FromStr>(env_var: &str, default: T) -> PentaractResult<T> {
+        let result = Self::get_env_var(env_var);
+
+        if matches!(result, Err(PentaractError::EnvConfigLoadingError(_))) {
+            return Ok(default);
+        }
+
+        result
     }
 }

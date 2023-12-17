@@ -40,17 +40,25 @@ impl StorageManager {
     }
 
     async fn upload(&self, data: UploadFileData) -> StorageManagerData {
-        let result = StorageManagerService::new(&self.db, &self.config.telegram_api_base_url)
-            .upload(data)
-            .await;
+        let result = StorageManagerService::new(
+            &self.db,
+            &self.config.telegram_api_base_url,
+            self.config.telegram_rate_limit,
+        )
+        .upload(data)
+        .await;
 
         StorageManagerData::UploadFile(result)
     }
 
     async fn download(&self, data: DownloadFileData) -> StorageManagerData {
-        let result = StorageManagerService::new(&self.db, &self.config.telegram_api_base_url)
-            .download(data)
-            .await;
+        let result = StorageManagerService::new(
+            &self.db,
+            &self.config.telegram_api_base_url,
+            self.config.telegram_rate_limit,
+        )
+        .download(data)
+        .await;
 
         StorageManagerData::DownloadFile(result)
     }
