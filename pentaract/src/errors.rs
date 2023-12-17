@@ -1,5 +1,4 @@
 use axum::http::StatusCode;
-use pwhash::error;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

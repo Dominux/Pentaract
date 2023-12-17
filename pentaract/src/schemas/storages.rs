@@ -1,9 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    common::types::ChatId,
-    models::storages::{Storage, StorageWithInfo},
-};
+use crate::{common::types::ChatId, models::storages::StorageWithInfo};
 
 #[derive(Deserialize)]
 pub struct InStorageSchema {

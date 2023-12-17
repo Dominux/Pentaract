@@ -15,7 +15,7 @@ use crate::{
         jwt_manager::AuthUser,
         routing::{app_state::AppState, middlewares::auth::logged_in_required},
     },
-    models::storages::{Storage, StorageWithInfo},
+    models::storages::Storage,
     schemas::{
         access::{GrantAccess, RestrictAccess},
         storages::{InStorageSchema, StoragesListSchema},
