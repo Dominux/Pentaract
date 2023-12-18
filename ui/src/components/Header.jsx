@@ -3,8 +3,11 @@ import Toolbar from '@suid/material/Toolbar'
 import Typography from '@suid/material/Typography'
 import IconButton from '@suid/material/IconButton'
 import { A, useNavigate } from '@solidjs/router'
-import createLocalStore from '../../libs'
 import LogoutIcon from '@suid/icons-material/Logout'
+import Box from '@suid/material/Box'
+
+import AppIcon from './AppIcon'
+import createLocalStore from '../../libs'
 
 const Header = () => {
 	const [_store, setStore] = createLocalStore()
@@ -20,9 +23,14 @@ const Header = () => {
 	return (
 		<AppBar>
 			<Toolbar sx={{ justifyContent: 'space-between' }}>
-				<Typography variant="h4" noWrap component="div">
-					<A href="/">Pentaract</A>
-				</Typography>
+				<A href="/">
+					<Box sx={{ display: 'flex', alignItems: 'center' }}>
+						<AppIcon />
+						<Typography variant="h4" noWrap sx={{ pl: 1.5 }}>
+							Pentaract
+						</Typography>
+					</Box>
+				</A>
 
 				<IconButton onClick={logout}>
 					<LogoutIcon sx={{ color: 'white' }} />
