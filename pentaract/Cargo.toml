@@ -11,7 +11,7 @@ codegen-units = 1
 # routing
 axum = { version = "0.6.20", features = ["headers", "tracing", "multipart"]}
 mime_guess = "2.0.4"
-tower = { version = "0.4.13", features = ["limit"] }
+tower = { version = "0.4.13", features = ["limit"], default-features = false}
 tower-http = { version = "0.4.4", features = ["fs", "trace", "cors"], default_features = false }
 
 # serialization/deserialization
