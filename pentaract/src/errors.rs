@@ -35,6 +35,8 @@ pub enum PentaractError {
     InvalidFolderName,
     #[error("You cannot manage access of yourself")]
     CannotManageAccessOfYourself,
+    #[error("Storage does not have workers")]
+    StorageDoesNotHaveWorkers,
     #[error("unknown error")]
     Unknown,
     #[error("{0} header is required")]
@@ -51,6 +53,7 @@ impl From<PentaractError> for (StatusCode, String) {
             | PentaractError::StorageChatIdConflict
             | PentaractError::StorageWorkerNameConflict
             | PentaractError::StorageWorkerTokenConflict
+            | PentaractError::StorageDoesNotHaveWorkers
             | PentaractError::CannotManageAccessOfYourself => (StatusCode::CONFLICT, e.to_string()),
             PentaractError::NotAuthenticated => (StatusCode::UNAUTHORIZED, e.to_string()),
             PentaractError::DoesNotExist(_) => (StatusCode::NOT_FOUND, e.to_string()),

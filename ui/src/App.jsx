@@ -11,6 +11,7 @@ import StorageWorkerCreateForm from './pages/StorageWorkers/StorageWorkerCreateF
 import Files from './pages/Files'
 import UploadFileTo from './pages/Files/UploadFileTo'
 import Register from './pages/Register'
+import NotFound from './pages/404'
 
 const theme = createTheme({
 	palette: {
@@ -41,6 +42,7 @@ const App = () => {
 						path="/storage_workers/register"
 						component={StorageWorkerCreateForm}
 					/>
+					<Route path="*404" component={NotFound} />
 				</Route>
 			</Routes>
 

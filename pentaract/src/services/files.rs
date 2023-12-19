@@ -17,12 +17,15 @@ use crate::{
         access::AccessType,
         files::{FSElement, File, InFile},
     },
-    repositories::{access::AccessRepository, files::FilesRepository},
+    repositories::{
+        access::AccessRepository, files::FilesRepository, storage_workers::StorageWorkersRepository,
+    },
     schemas::files::{InFileSchema, InFolderSchema},
 };
 
 pub struct FilesService<'d> {
     repo: FilesRepository<'d>,
+    storage_workers_repo: StorageWorkersRepository<'d>,
     access_repo: AccessRepository<'d>,
     tx: ClientSender,
 }
@@ -30,10 +33,12 @@ pub struct FilesService<'d> {
 impl<'d> FilesService<'d> {
     pub fn new(db: &'d PgPool, tx: ClientSender) -> Self {
         let repo = FilesRepository::new(db);
+        let storage_workers_repo = StorageWorkersRepository::new(db);
         let access_repo = AccessRepository::new(db);
         Self {
             repo,
             access_repo,
+            storage_workers_repo,
             tx,
         }
     }
@@ -82,14 +87,17 @@ impl<'d> FilesService<'d> {
         )
         .await?;
 
-        // 1. path validation
+        // 1. check whether storage got workers
+        Self::check_storage_workers(&self, in_schema.storage_id).await?;
+
+        // 2. path validation
         if !Self::validate_filepath(&in_schema.path) {
             return Err(PentaractError::InvalidPath);
         }
 
         let in_file = InFile::new(in_schema.path, in_schema.size, in_schema.storage_id);
 
-        // 2. saving file to db
+        // 3. saving file to db
         let file = self.repo.create_file(in_file).await?;
 
         self._upload(file, in_schema.file, user).await
@@ -110,7 +118,10 @@ impl<'d> FilesService<'d> {
         )
         .await?;
 
-        // 1. saving file in db
+        // 1. check whether storage got workers
+        Self::check_storage_workers(&self, in_file.storage_id).await?;
+
+        // 2. saving file in db
         let file = self.repo.create_file_anyway(in_file).await?;
 
         self._upload(file, file_data, user).await
@@ -155,6 +166,18 @@ impl<'d> FilesService<'d> {
         };
 
         Ok(())
+    }
+
+    async fn check_storage_workers(&self, storage_id: Uuid) -> PentaractResult<()> {
+        if !self
+            .storage_workers_repo
+            .storage_has_any(storage_id)
+            .await?
+        {
+            Err(PentaractError::StorageDoesNotHaveWorkers)
+        } else {
+            Ok(())
+        }
     }
 
     pub async fn download(

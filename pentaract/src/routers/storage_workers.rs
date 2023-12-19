@@ -1,8 +1,12 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::State, http::StatusCode, middleware, response::IntoResponse, routing::get, Extension,
-    Json, Router,
+    extract::{Query, State},
+    http::StatusCode,
+    middleware,
+    response::{IntoResponse, Response},
+    routing::get,
+    Extension, Json, Router,
 };
 
 use crate::{
@@ -10,7 +14,9 @@ use crate::{
         jwt_manager::AuthUser,
         routing::{app_state::AppState, middlewares::auth::logged_in_required},
     },
-    schemas::storage_workers::InStorageWorkerSchema,
+    schemas::storage_workers::{
+        HasStorageWorkers, InStorageWorkerSchema, StorageWorkersStorageIDQuery,
+    },
     services::storage_workers::StorageWorkersService,
 };
 
@@ -20,6 +26,7 @@ impl StorageWorkersRouter {
     pub fn get_router(state: Arc<AppState>) -> Router {
         Router::new()
             .route("/", get(Self::list).post(Self::create))
+            .route("/has_workers", get(Self::has_storages_workers))
             .route_layer(middleware::from_fn_with_state(
                 state.clone(),
                 logged_in_required,
@@ -44,5 +51,16 @@ impl StorageWorkersRouter {
     ) -> impl IntoResponse {
         let sws = StorageWorkersService::new(&state.db).list(&user).await?;
         Ok::<_, (StatusCode, String)>((StatusCode::OK, Json(sws)))
+    }
+
+    pub async fn has_storages_workers(
+        State(state): State<Arc<AppState>>,
+        Extension(user): Extension<AuthUser>,
+        query: Query<StorageWorkersStorageIDQuery>,
+    ) -> Result<Response, (StatusCode, String)> {
+        let has = StorageWorkersService::new(&state.db)
+            .has_storage_workers(query.0.storage_id, &user)
+            .await?;
+        Ok(Json(HasStorageWorkers { has }).into_response())
     }
 }

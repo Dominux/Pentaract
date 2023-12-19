@@ -56,6 +56,18 @@ impl<'d> StorageWorkersRepository<'d> {
         Ok(sw)
     }
 
+    pub async fn storage_has_any(&self, storage_id: Uuid) -> PentaractResult<bool> {
+        let has_sws: (_,) = sqlx::query_as(&format!(
+            "SELECT COUNT(*) > 0 FROM {STORAGE_WORKERS_TABLE} WHERE storage_id = $1"
+        ))
+        .bind(storage_id)
+        .fetch_one(self.db)
+        .await
+        .map_err(|e| map_not_found(e, "storage_workers"))?;
+
+        Ok(has_sws.0)
+    }
+
     pub async fn list_by_user_id(&self, user_id: Uuid) -> PentaractResult<Vec<StorageWorker>> {
         sqlx::query_as(&format!(
             "SELECT * FROM {STORAGE_WORKERS_TABLE} WHERE user_id = $1"
