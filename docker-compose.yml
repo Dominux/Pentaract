@@ -16,7 +16,7 @@ services:
     env_file:
       - .env
     ports:
-      - ${PORT}:8080
+      - ${PORT}:8000
     restart: unless-stopped
     depends_on:
       - db
