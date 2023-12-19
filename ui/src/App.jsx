@@ -1,8 +1,7 @@
-import { Routes, Route } from '@solidjs/router'
+import { Routes, Route, Navigate } from '@solidjs/router'
 import { ThemeProvider, createTheme } from '@suid/material'
 
 import Login from './pages/Login'
-import Home from './pages/Home'
 import BasicLayout from './layouts/Basic'
 import Storages from './pages/Storages'
 import StorageCreateForm from './pages/Storages/StorageCreateForm'
@@ -32,7 +31,7 @@ const App = () => {
 				<Route path="/register" component={Register} />
 
 				<Route path="/" component={BasicLayout}>
-					<Route path="/" component={Home} />
+					<Route path="/" element={<Navigate href="/storages" />} />
 					<Route path="/storages" component={Storages} />
 					<Route path="/storages/register" component={StorageCreateForm} />
 					<Route path="/storages/:id/files/*path" component={Files} />
