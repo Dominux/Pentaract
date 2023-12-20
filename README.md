@@ -220,6 +220,7 @@ To check if everything works fine you can go to http://localhost:8000 or to `htt
 </details>
 
 <br/>
+
 It's also recommended to use a HTTP reverse-proxy, like [Nginx](https://www.nginx.com/) or [Traefik](https://traefik.io/traefik/) if you use containarized version of the app and don't wanna work with Nginx and certbot.
 
 # Usage
