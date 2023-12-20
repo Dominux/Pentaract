@@ -9,6 +9,8 @@ _Cloud storage system based on using Telegram as a storage so it doesn't use you
 
 Pentaract is aimed to take as small disk space as possible. So it does not need any code interpreter/platform to run. The whole app is just several megabytes in size. It also uses Postgres as a database and we try our best to economy space by not creating unneeded fields and tables and to wisely pick proper datatypes.
 
+The platform itself can be used differently, like as a personal (on your own server or a local machine) platform or a platform for many users with multiple storages and so on. Since it provides Rest API, you can also use it as a file system in your backend like [NextCloud](https://nextcloud.com/) or [AWS S3](https://aws.amazon.com/s3/) or S3 compatable services (like [MinIO](https://min.io/)), but for now it's so early so I don't recommend to use it in production ready apps.
+
 # Installation
 
 This project is aimed on running the app in container, so the primary way to run it is via [Docker](https://www.docker.com/). If you don't have it installed or simply don't want to run the app via Docker, you can build it from source.
@@ -217,4 +219,60 @@ To check if everything works fine you can go to http://localhost:8000 or to `htt
 
 </details>
 
+<br/>
+It's also recommended to use a HTTP reverse-proxy, like [Nginx](https://www.nginx.com/) or [Traefik](https://traefik.io/traefik/) if you use containarized version of the app and don't wanna work with Nginx and certbot.
+
 # Usage
+
+The platform is tied to the "storages" concept. Every storage is a separated files system, like different volumes on your drive. It provides funcionallity to work with a file system like it's Google Drive: you can create files and folders, download files, see files and folders info and delete them on your wish.
+
+In our case every storage has its own Telegram channel, where it will store all the data.
+
+The platform also uses "storage workers". It is telegram bots that are used to upload and download files from the telegram API
+
+## Telegram API limitations
+
+Telegram has its policy to limit some access to their platform. For us the main limitations are:
+
+- Requests per a period for one bot (RPM)
+- File size
+
+Pentaract has ways to workaround them:
+
+### RPM
+
+To workaround RPM users can create additional storage workers. For now one user can create up to 20 bots. You can also create additional accounts to create extra bots or ask your nearest for example to do so. This way from up to Telegram limitations it becomes up to you on how fast you can upload/download in Pentaract storage.
+
+I should notice that current RPM (20 requests per minute) is completely fine to work with a single storage worker if you need the storage to be your own and don't need to upload/download big files fast.
+
+### File size
+
+Currently Telegram API limits file download to 20 MB, hence we can't upload files more than that limit too.
+
+Pentaract divides uploaded files into chunks and save them to Telegram separately and on downloading a file it fetches all the file chunks from the Telegram API and combine them into one in the order it was divided in. That grants ability to upload and download files with almost unlimited size (it's like you've ever downloaded a file with size >10 GB).
+
+## Current in storage features
+
+- [x] Upload file
+- [x] Download file
+- [x] Create folder
+- [x] Get file/folder info
+- [x] Delete file/folder
+
+## Access
+
+You can manage access to your storages by granting access to other users. For now, there are 3 possible roles:
+
+- Viewer
+- Can edit
+- Admin
+
+So you can grant access, change it or restrict (delete access) for other users.
+
+# Future plans
+
+Cloud storage system has a huge variety of possible ways to develop in. Like it can be a file hosting service, a cloud object storage, a cloud drive or anything else or everything in one place. And I personally don't have idea right now where to move and what users need so I'd like to know what features you would like this app to provide.
+
+# Contributing
+
+Is highly welcoming! Create issues or take existing ones and create PRs!
