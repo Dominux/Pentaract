@@ -6,6 +6,8 @@ import Typography from '@suid/material/Typography'
 import { createSignal } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
 import Stack from '@suid/material/Stack'
+import IconButton from '@suid/material/IconButton'
+import HelpOutlineIcon from '@suid/icons-material/HelpOutline'
 import ChevronLeftIcon from '@suid/icons-material/ChevronLeft'
 
 import API from '../../api'
@@ -79,7 +81,17 @@ const StorageCreateForm = () => {
 					'& > :not(style)': { my: 1.5 },
 				}}
 			>
-				<Typography variant="h5">Register new storage</Typography>
+				<Typography variant="h5">
+					Register new storage
+					<a
+						href="https://github.com/Dominux/Pentaract/wiki/Creating-storages"
+						target="_blank"
+					>
+						<IconButton color="warning" sx={{ py: 0 }}>
+							<HelpOutlineIcon />
+						</IconButton>
+					</a>
+				</Typography>
 				<Divider />
 				<TextField
 					id="name"

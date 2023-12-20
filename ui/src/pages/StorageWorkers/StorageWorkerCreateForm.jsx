@@ -9,8 +9,10 @@ import Typography from '@suid/material/Typography'
 import { createSignal, mapArray, onMount } from 'solid-js'
 import { useNavigate } from '@solidjs/router'
 import Stack from '@suid/material/Stack'
-import ChevronLeftIcon from '@suid/icons-material/ChevronLeft'
 import MenuItem from '@suid/material/MenuItem'
+import IconButton from '@suid/material/IconButton'
+import HelpOutlineIcon from '@suid/icons-material/HelpOutline'
+import ChevronLeftIcon from '@suid/icons-material/ChevronLeft'
 
 import API from '../../api'
 import { alertStore } from '../../components/AlertStack'
@@ -73,7 +75,17 @@ const StorageWorkerCreateForm = () => {
 					'& > :not(style)': { my: 1.5 },
 				}}
 			>
-				<Typography variant="h5">Register new storage worker</Typography>
+				<Typography variant="h5">
+					Register new storage worker
+					<a
+						href="https://github.com/Dominux/Pentaract/wiki/Creating-storage-workers"
+						target="_blank"
+					>
+						<IconButton color="warning" sx={{ py: 0 }}>
+							<HelpOutlineIcon />
+						</IconButton>
+					</a>
+				</Typography>
 				<Divider />
 				<TextField
 					id="name"
