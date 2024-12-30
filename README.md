@@ -274,6 +274,16 @@ You can manage access to your storages by granting access to other users. For no
 
 So you can grant access, change it or restrict (delete access) for other users.
 
+# Donations
+
+If you find this project useful and would like to see it continue to grow and improve, your support is greatly appreciated! Your donation will help cover the costs of development, maintenance, and future enhancements. Every contribution, no matter the size, makes a significant impact:
+
+**BTC**: `18mquj59AcB4y4VBevdn5HekG5y7gvPYGk`
+
+**TON**: `UQDoGRgUIEDA30cko8k-icnI8S5i8QIq2jFvqswNvVUc9F2U`
+
+**USDT TON**: `UQDoGRgUIEDA30cko8k-icnI8S5i8QIq2jFvqswNvVUc9F2U`
+
 # Future plans
 
 Cloud storage system has a huge variety of possible ways to develop in. Like it can be a file hosting service, a cloud object storage, a cloud drive or anything else or everything in one place. And I personally don't have idea right now where to move and what users need so I'd like to know what features you would like this app to provide.
