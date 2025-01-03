@@ -7,9 +7,13 @@
 
 _Cloud storage system based on using Telegram as a storage so it doesn't use your server filesystem or any other paid cloud storage system underneath the hood._
 
+**BTC**: `18mquj59AcB4y4VBevdn5HekG5y7gvPYGk`
+
+**TON**: `UQDoGRgUIEDA30cko8k-icnI8S5i8QIq2jFvqswNvVUc9F2U`
+
+**USDT TON**: `UQDoGRgUIEDA30cko8k-icnI8S5i8QIq2jFvqswNvVUc9F2U`
 
 https://github.com/Dominux/Pentaract/assets/55978340/b62305a7-cae3-4e1c-a509-38e415392dcf
-
 
 Pentaract is aimed to take as small disk space as possible. So it does not need any code interpreter/platform to run. The whole app is just several megabytes in size. It also uses Postgres as a database and we try our best to economy space by not creating unneeded fields and tables and to wisely pick proper datatypes.
 

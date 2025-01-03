@@ -1,8 +1,8 @@
 use axum::body::Bytes;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::common::types::Position;
+use crate::{common::types::Position, models::files::File};
 
 #[derive(Deserialize)]
 pub struct UploadParams {
@@ -25,6 +25,23 @@ impl InFileSchema {
             path,
             size,
             file,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct SearchFileSchema {
+    pub id: Uuid,
+    pub path: String,
+    pub size: i64,
+}
+
+impl From<File> for SearchFileSchema {
+    fn from(value: File) -> Self {
+        Self {
+            id: value.id,
+            path: value.path,
+            size: value.size,
         }
     }
 }
@@ -56,4 +73,9 @@ impl DownloadedChunkSchema {
     pub fn new(position: Position, data: Vec<u8>) -> Self {
         Self { position, data }
     }
+}
+
+#[derive(Deserialize)]
+pub struct SearchQuery {
+    pub search_path: Option<String>,
 }

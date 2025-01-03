@@ -2,7 +2,7 @@ use std::{collections::HashMap, path::Path, sync::Arc};
 
 use axum::{
     body::Full,
-    extract::{DefaultBodyLimit, Multipart, Path as RoutePath, State},
+    extract::{DefaultBodyLimit, Multipart, Path as RoutePath, Query, State},
     http::StatusCode,
     middleware,
     response::{AppendHeaders, IntoResponse, Response},
@@ -20,7 +20,9 @@ use crate::{
     },
     errors::{PentaractError, PentaractResult},
     models::files::InFile,
-    schemas::files::{InFileSchema, InFolderSchema, UploadParams, IN_FILE_SCHEMA_FIELDS_AMOUNT},
+    schemas::files::{
+        InFileSchema, InFolderSchema, SearchQuery, UploadParams, IN_FILE_SCHEMA_FIELDS_AMOUNT,
+    },
     services::files::FilesService,
 };
 
@@ -45,11 +47,22 @@ impl FilesRouter {
         State(state): State<Arc<AppState>>,
         Extension(user): Extension<AuthUser>,
         RoutePath((storage_id, path)): RoutePath<(Uuid, String)>,
+        query: Query<SearchQuery>,
     ) -> impl IntoResponse {
         let (root_path, path) = path.split_once("/").unwrap_or((&path, ""));
         match root_path {
             "tree" => Self::tree(state, user, storage_id, path).await,
             "download" => Self::download(state, user, storage_id, path).await,
+            "search" => {
+                if let Some(search_path) = query.0.search_path {
+                    Self::search(state, user, storage_id, path, &search_path).await
+                } else {
+                    Err((
+                        StatusCode::UNPROCESSABLE_ENTITY,
+                        "search_path query parameter is required".to_owned(),
+                    ))
+                }
+            }
             _ => Err((StatusCode::NOT_FOUND, "Not found".to_owned())),
         }
     }
@@ -200,6 +213,23 @@ impl FilesRouter {
 
                 (headers, body).into_response()
             })
+            .map_err(|e| <(StatusCode, String)>::from(e))
+    }
+
+    ///
+    /// Need path with trailing slash
+    ///
+    async fn search(
+        state: Arc<AppState>,
+        user: AuthUser,
+        storage_id: Uuid,
+        path: &str,
+        search_path: &str,
+    ) -> Result<Response, (StatusCode, String)> {
+        FilesService::new(&state.db, state.tx.clone())
+            .search(path, storage_id, search_path, &user)
+            .await
+            .map(|files| files.into_iter().map(|file| file.into()).into_response()(headers, body))
             .map_err(|e| <(StatusCode, String)>::from(e))
     }
 

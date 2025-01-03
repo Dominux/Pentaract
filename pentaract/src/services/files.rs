@@ -233,6 +233,18 @@ impl<'d> FilesService<'d> {
         self.repo.list_dir(storage_id, path).await
     }
 
+    pub async fn search(
+        self,
+        storage_id: Uuid,
+        path: &str,
+        search_path: &str,
+        user: &AuthUser,
+    ) -> PentaractResult<Vec<File>> {
+        check_access(&self.access_repo, user.id, storage_id, &AccessType::R).await?;
+
+        self.repo.search(search_path, path, storage_id).await
+    }
+
     pub async fn rename(
         &self,
         old_path: &str,

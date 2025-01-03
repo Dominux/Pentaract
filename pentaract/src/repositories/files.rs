@@ -97,11 +97,11 @@ impl<'d> FilesRepository<'d> {
                     WHERE storage_id = $3 AND path ~ ('^(' || regexp_quote($1) || regexp_quote($2) || '|' || regexp_quote($1) || ' \(\d+\)' || regexp_quote($2) || ')$')
                     ORDER BY path DESC
                 )
-                SELECT 
+                SELECT
                     CASE
                         WHEN NOT EXISTS(
-                            SELECT path 
-                            FROM f 
+                            SELECT path
+                            FROM f
                             WHERE path = $1 || $2
                         ) THEN $1 || $2
                         ELSE
@@ -118,9 +118,9 @@ impl<'d> FilesRepository<'d> {
                                         ORDER BY i
                                     )
                                     SELECT $1 || ' (' || COALESCE(t.next_i, (
-                                        SELECT cte.i + 1 
-                                        FROM cte 
-                                        ORDER BY cte.i DESC 
+                                        SELECT cte.i + 1
+                                        FROM cte
+                                        ORDER BY cte.i DESC
                                         LIMIT 1
                                     )) || ')' || $2
                                     FROM cte
@@ -206,14 +206,14 @@ impl<'d> FilesRepository<'d> {
 
             format!(
                 "
-                SELECT 
-                    DISTINCT {split_part} AS name, 
+                SELECT
+                    DISTINCT {split_part} AS name,
                     $1 || {split_part} = path AS is_file,
                     CASE
                         WHEN $1 || {split_part} = path THEN size
                         ELSE (SELECT SUM(size) FROM {FILES_TABLE} WHERE path LIKE $1 || {split_part} || '/' || '%')::BigInt
                     END AS size
-                FROM {FILES_TABLE} 
+                FROM {FILES_TABLE}
                 WHERE storage_id = $2 {path_filter} AND is_uploaded AND {split_part} <> '';
             "
             )
@@ -248,6 +248,22 @@ impl<'d> FilesRepository<'d> {
             .collect();
 
         Ok(fs_layer)
+    }
+
+    pub async fn search(
+        &self,
+        search_path: &str,
+        path: &str,
+        storage_id: Uuid,
+    ) -> PentaractResult<Vec<File>> {
+        sqlx::query_as(
+            format!("SELECT * FROM {FILES_TABLE} WHERE storage_id = $1 AND path ILIKE $2 || '%' || $3 || '%'").as_str(),
+        )
+        .bind(storage_id)
+        .bind(path)
+        .bind(search_path)
+        .fetch_all(self.db)
+        .await
     }
 
     pub async fn get_file_by_path(&self, path: &str, storage_id: Uuid) -> PentaractResult<File> {
@@ -289,8 +305,8 @@ impl<'d> FilesRepository<'d> {
         sqlx::query(
             format!(
                 "
-                UPDATE {FILES_TABLE} 
-                SET path = $1 || SUBSTRING(path, {chars_skip}) 
+                UPDATE {FILES_TABLE}
+                SET path = $1 || SUBSTRING(path, {chars_skip})
                 WHERE storage_id = $2 AND path LIKE $3 || '%'
             "
             )
@@ -328,7 +344,7 @@ impl<'d> FilesRepository<'d> {
         // deleting file
         sqlx::query(&format!(
             "
-            DELETE FROM {FILES_TABLE} 
+            DELETE FROM {FILES_TABLE}
             WHERE storage_id = $1 AND path {where_path};
             "
         ))
@@ -346,10 +362,10 @@ impl<'d> FilesRepository<'d> {
             sqlx::query(&format!(
                 "
                 INSERT INTO {FILES_TABLE} (id, path, size, storage_id, is_uploaded)
-                SELECT $1, $2, 0, $3, true 
-                WHERE 
+                SELECT $1, $2, 0, $3, true
+                WHERE
                     NOT EXISTS (
-                        SELECT id 
+                        SELECT id
                         FROM {FILES_TABLE}
                         WHERE storage_id = $3 AND path LIKE $2 || '%'
                     );
