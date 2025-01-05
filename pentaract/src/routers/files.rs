@@ -227,9 +227,9 @@ impl FilesRouter {
         search_path: &str,
     ) -> Result<Response, (StatusCode, String)> {
         FilesService::new(&state.db, state.tx.clone())
-            .search(path, storage_id, search_path, &user)
+            .search(storage_id, path, search_path, &user)
             .await
-            .map(|files| files.into_iter().map(|file| file.into()).into_response()(headers, body))
+            .map(|files| Json(files).into_response())
             .map_err(|e| <(StatusCode, String)>::from(e))
     }
 

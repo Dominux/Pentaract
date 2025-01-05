@@ -57,3 +57,9 @@ pub struct FSElement {
     pub size: i64,
     pub is_file: bool,
 }
+
+#[derive(Debug, sqlx::FromRow, Serialize)]
+pub struct SearchFSElement {
+    pub path: String,
+    pub is_file: bool,
+}

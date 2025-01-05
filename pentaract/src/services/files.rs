@@ -15,7 +15,7 @@ use crate::{
     errors::{PentaractError, PentaractResult},
     models::{
         access::AccessType,
-        files::{FSElement, File, InFile},
+        files::{FSElement, File, InFile, SearchFSElement},
     },
     repositories::{
         access::AccessRepository, files::FilesRepository, storage_workers::StorageWorkersRepository,
@@ -239,7 +239,7 @@ impl<'d> FilesService<'d> {
         path: &str,
         search_path: &str,
         user: &AuthUser,
-    ) -> PentaractResult<Vec<File>> {
+    ) -> PentaractResult<Vec<SearchFSElement>> {
         check_access(&self.access_repo, user.id, storage_id, &AccessType::R).await?;
 
         self.repo.search(search_path, path, storage_id).await

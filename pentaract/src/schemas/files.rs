@@ -29,23 +29,6 @@ impl InFileSchema {
     }
 }
 
-#[derive(Serialize)]
-pub struct SearchFileSchema {
-    pub id: Uuid,
-    pub path: String,
-    pub size: i64,
-}
-
-impl From<File> for SearchFileSchema {
-    fn from(value: File) -> Self {
-        Self {
-            id: value.id,
-            path: value.path,
-            size: value.size,
-        }
-    }
-}
-
 pub const IN_FILE_SCHEMA_FIELDS_AMOUNT: usize = 2;
 
 pub struct InFolderSchema {

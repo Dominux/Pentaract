@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::common::db::errors::map_not_found;
 use crate::errors::{PentaractError, PentaractResult};
 use crate::models::file_chunks::FileChunk;
-use crate::models::files::{DBFSElement, FSElement, File, InFile};
+use crate::models::files::{DBFSElement, FSElement, File, InFile, SearchFSElement};
 
 pub const FILES_TABLE: &str = "files";
 pub const CHUNKS_TABLE: &str = "file_chunks";
@@ -255,15 +255,27 @@ impl<'d> FilesRepository<'d> {
         search_path: &str,
         path: &str,
         storage_id: Uuid,
-    ) -> PentaractResult<Vec<File>> {
+    ) -> PentaractResult<Vec<SearchFSElement>> {
         sqlx::query_as(
-            format!("SELECT * FROM {FILES_TABLE} WHERE storage_id = $1 AND path ILIKE $2 || '%' || $3 || '%'").as_str(),
+            format!(
+                "SELECT
+                    path,
+                    path LIKE '%/' AS is_file
+                FROM {FILES_TABLE}
+                WHERE storage_id = $1 AND path ILIKE $2 || '%' || $3 || '%'
+            "
+            )
+            .as_str(),
         )
         .bind(storage_id)
         .bind(path)
         .bind(search_path)
         .fetch_all(self.db)
         .await
+        .map_err(|e| {
+            tracing::error!("{e}");
+            PentaractError::Unknown
+        })
     }
 
     pub async fn get_file_by_path(&self, path: &str, storage_id: Uuid) -> PentaractResult<File> {
